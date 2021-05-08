@@ -45,7 +45,18 @@ const XboxOneMapping = {
     ]
 }
 
-const ALL_MAPPINGS = [ PS3Mapping, PS4Mapping, Xbox360Mapping, XboxOneMapping ]
+const SwitchMapping = {
+    name: 'Switch',
+    filePrefix: 'Switch_',
+    buttons: [
+        'B', 'A', 'Y', 'X',
+        'L', 'R', 'ZL', 'ZR',
+        'Minus', 'Plus', 'Left_Stick', 'Right_Stick',
+        'Dpad_Up', 'Dpad_Down', 'Dpad_Left', 'Dpad_Right'
+    ]
+}
+
+const ALL_MAPPINGS = [ PS3Mapping, PS4Mapping, Xbox360Mapping, XboxOneMapping, SwitchMapping ]
 
 // avoid naming collision with DOM's GamepadButton
 class _GamepadButton {

@@ -23,18 +23,18 @@ Add Netflix Controller to your browser [here](https://chrome.google.com/webstore
 
 ### Video Player Controls
 
-| Action | Xbox | Playstation |
-|--------|------|-------------|
-| Play / Pause  | <img alt='A' src='static/buttons/Xbox%20One/XboxOne_A.png' width='40'> | <img alt='Cross' src='static/buttons/PS4/PS4_Cross.png' width='40'> |
-| Mute          | <img alt='X' src='static/buttons/Xbox%20One/XboxOne_X.png' width='40'> | <img alt='Square' src='static/buttons/PS4/PS4_Square.png' width='40'> |
-| Fullscreen    | <img alt='Y' src='static/buttons/Xbox%20One/XboxOne_Y.png' width='40'> | <img alt='Triangle' src='static/buttons/PS4/PS4_Triangle.png' width='40'> |
-| Go Back       | <img alt='B' src='static/buttons/Xbox%20One/XboxOne_B.png' width='40'> | <img alt='Square' src='static/buttons/PS4/PS4_Square.png' width='40'> |
-| Volume Up     | <img alt='Dpad Up' src='static/buttons/Xbox%20One/XboxOne_Dpad_Up.png' width='40'> | <img alt='Dpad Up' src='static/buttons/PS4/PS4_Dpad_Up.png' width='40'> |
-| Volume Down   | <img alt='Dpad Down' src='static/buttons/Xbox%20One/XboxOne_Dpad_Down.png' width='40'> | <img alt='Dpad Down' src='static/buttons/PS4/PS4_Dpad_Down.png' width='40'> |
-| Jump 10s      | <img alt='Dpad Right' src='static/buttons/Xbox%20One/XboxOne_Dpad_Right.png' width='40'> | <img alt='Dpad Right' src='static/buttons/PS4/PS4_Dpad_Right.png' width='40'> |
-| Jump Back 10s | <img alt='Dpad Left' src='static/buttons/Xbox%20One/XboxOne_Dpad_Left.png' width='40'> | <img alt='Dpad Left' src='static/buttons/PS4/PS4_Dpad_Left.png' width='40'> |
-| Skip Intro    | <img alt='Start' src='static/buttons/Xbox%20One/XboxOne_Menu.png' width='40'> | <img alt='Start' src='static/buttons/PS4/PS4_Options.png' width='40'> |
-| Next Episode  | <img alt='RB' src='static/buttons/Xbox%20One/XboxOne_RB.png' width='40'> | <img alt='R1' src='static/buttons/PS4/PS4_R1.png' width='40'> |
+| Action | Xbox | Playstation | Switch |
+|--------|------|-------------|--------|
+| Play / Pause  | <img alt='A' src='static/buttons/Xbox%20One/XboxOne_A.png' width='40'>                   | <img alt='Cross' src='static/buttons/PS4/PS4_Cross.png' width='40'>           |<img alt='B' src='static/buttons/Switch/Switch_B.png' width='40'>                   |
+| Mute          | <img alt='X' src='static/buttons/Xbox%20One/XboxOne_X.png' width='40'>                   | <img alt='Square' src='static/buttons/PS4/PS4_Square.png' width='40'>         |<img alt='Y' src='static/buttons/Switch/Switch_Y.png' width='40'>                   |
+| Fullscreen    | <img alt='Y' src='static/buttons/Xbox%20One/XboxOne_Y.png' width='40'>                   | <img alt='Triangle' src='static/buttons/PS4/PS4_Triangle.png' width='40'>     |<img alt='X' src='static/buttons/Switch/Switch_X.png' width='40'>                   |
+| Go Back       | <img alt='B' src='static/buttons/Xbox%20One/XboxOne_B.png' width='40'>                   | <img alt='Square' src='static/buttons/PS4/PS4_Square.png' width='40'>         |<img alt='A' src='static/buttons/Switch/Switch_A.png' width='40'>                   |
+| Volume Up     | <img alt='Dpad Up' src='static/buttons/Xbox%20One/XboxOne_Dpad_Up.png' width='40'>       | <img alt='Dpad Up' src='static/buttons/PS4/PS4_Dpad_Up.png' width='40'>       |<img alt='Dpad Up' src='static/buttons/Switch/Switch_Dpad_Up.png' width='40'>       |
+| Volume Down   | <img alt='Dpad Down' src='static/buttons/Xbox%20One/XboxOne_Dpad_Down.png' width='40'>   | <img alt='Dpad Down' src='static/buttons/PS4/PS4_Dpad_Down.png' width='40'>   |<img alt='Dpad Down' src='static/buttons/Switch/Switch_Dpad_Down.png' width='40'>   |
+| Jump 10s      | <img alt='Dpad Right' src='static/buttons/Xbox%20One/XboxOne_Dpad_Right.png' width='40'> | <img alt='Dpad Right' src='static/buttons/PS4/PS4_Dpad_Right.png' width='40'> |<img alt='Dpad Right' src='static/buttons/Switch/Switch_Dpad_Right.png' width='40'> |
+| Jump Back 10s | <img alt='Dpad Left' src='static/buttons/Xbox%20One/XboxOne_Dpad_Left.png' width='40'>   | <img alt='Dpad Left' src='static/buttons/PS4/PS4_Dpad_Left.png' width='40'>   |<img alt='Dpad Left' src='static/buttons/Switch/Switch_Dpad_Left.png' width='40'>   |
+| Skip Intro    | <img alt='Start' src='static/buttons/Xbox%20One/XboxOne_Menu.png' width='40'>            | <img alt='Start' src='static/buttons/PS4/PS4_Options.png' width='40'>         |<img alt='Start' src='static/buttons/Switch/Switch_Menu.png' width='40'>            |
+| Next Episode  | <img alt='RB' src='static/buttons/Xbox%20One/XboxOne_RB.png' width='40'>                 | <img alt='R1' src='static/buttons/PS4/PS4_R1.png' width='40'>                 |<img alt='R' src='static/buttons/Switch/Switch_R.png' width='40'>                 |
 
 ## Screenshots
 

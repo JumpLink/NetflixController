@@ -89,7 +89,7 @@ class Slider extends Navigatable {
         let actions = [{
             label: 'Play',
             index: StandardMapping.Button.BUTTON_BOTTOM,
-            onPress: () => this.clickHitzone('.bob-play-hitzone')
+            onPress: () => this.clickHitzone('.previewModal--player_container')
         }];
         if (!this.jawboneOpen) {
             actions.push(this.jawboneAction);

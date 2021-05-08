@@ -15,7 +15,8 @@ const OPTIONS = [
             'Xbox 360',
             'Xbox One',
             'PS3',
-            'PS4'
+            'PS4',
+            'Switch'
         ],
         default: 'Xbox One',
         condition: {
