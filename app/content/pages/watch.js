@@ -6,7 +6,7 @@ class WatchVideo extends NavigatablePage {
         this.inactivityTimer = null;
         this.postplay = false;
         this.hasInteractiveChoices = false;
-        this.hasPreviousEpisode = true;
+        // this.hasPreviousEpisode = true;
         this.hasNextEpisode = true;
         this.hasSkipIntro = false;
         this.backAction = {
@@ -19,11 +19,11 @@ class WatchVideo extends NavigatablePage {
             index: StandardMapping.Button.BUTTON_CONTROL_RIGHT,
             onPress: () => this.skipIntro()
         };
-        this.previousEpisodeAction = {
-            label: 'Previous Episode',
-            index: StandardMapping.Button.BUMPER_LEFT,
-            onPress: () => this.openPreviousEpisode()
-        };
+        // this.previousEpisodeAction = {
+        //     label: 'Previous Episode',
+        //     index: StandardMapping.Button.BUMPER_LEFT,
+        //     onPress: () => this.openPreviousEpisode()
+        // };
         this.nextEpisodeAction = {
             label: 'Next Episode',
             index: StandardMapping.Button.BUMPER_RIGHT,
@@ -135,14 +135,14 @@ class WatchVideo extends NavigatablePage {
     setPostPlay(postplay) {
         if (postplay) {
             actionHandler.removeAll(this.getActions());
-            actionHandler.addAction(this.previousEpisodeAction);
+            // actionHandler.addAction(this.previousEpisodeAction);
             actionHandler.addAction(this.nextEpisodeAction);
             actionHandler.addAction(this.backAction);
             this.setActivityTimer();
             this.postplay = true;
         } else {
             this.postplay = false;
-            actionHandler.removeAction(this.previousEpisodeAction);
+            // actionHandler.removeAction(this.previousEpisodeAction);
             actionHandler.removeAction(this.nextEpisodeAction);
             actionHandler.removeAction(this.backAction);
             actionHandler.addAll(this.getActions());
@@ -171,14 +171,14 @@ class WatchVideo extends NavigatablePage {
         }
     }
 
-    showPreviousEpisode(visible) {
-        this.hasPreviousEpisode = visible;
-        if (visible) {
-            actionHandler.addAction(this.previousEpisodeAction);
-        } else {
-            actionHandler.removeAction(this.previousEpisodeAction);
-        }
-    }
+    // showPreviousEpisode(visible) {
+    //     this.hasPreviousEpisode = visible;
+    //     if (visible) {
+    //         actionHandler.addAction(this.previousEpisodeAction);
+    //     } else {
+    //         actionHandler.removeAction(this.previousEpisodeAction);
+    //     }
+    // }
 
     showNextEpisode(visible) {
         this.hasNextEpisode = visible;
@@ -214,9 +214,9 @@ class WatchVideo extends NavigatablePage {
             return [];
         }
         let actions = this.getDefaultActions();
-        if (this.hasPreviousEpisode) {
-            actions.push(this.previousEpisodeAction);
-        }
+        // if (this.hasPreviousEpisode) {
+        //     actions.push(this.previousEpisodeAction);
+        // }
         if (this.hasNextEpisode) {
             actions.push(this.nextEpisodeAction);
         }
@@ -279,6 +279,10 @@ class WatchVideo extends NavigatablePage {
             super.setNavigatable(position);
         }
     }
+
+    // openPreviousEpisode() {
+    //     this.clickControl('.button-nfplayerEpisodes', 'nfp-episode-expander [data-uia-is-expanded="true"]');
+    // }
 
     openNextEpisode() {
         this.clickControl('.button-nfplayerNextEpisode', 'button[data-uia="next-episode-seamless-button"]');

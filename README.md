@@ -34,7 +34,7 @@ Add Netflix Controller to your browser [here](https://chrome.google.com/webstore
 | Jump 10s      | <img alt='Dpad Right' src='static/buttons/Xbox%20One/XboxOne_Dpad_Right.png' width='40'> | <img alt='Dpad Right' src='static/buttons/PS4/PS4_Dpad_Right.png' width='40'> |<img alt='Dpad Right' src='static/buttons/Switch/Switch_Dpad_Right.png' width='40'> |
 | Jump Back 10s | <img alt='Dpad Left' src='static/buttons/Xbox%20One/XboxOne_Dpad_Left.png' width='40'>   | <img alt='Dpad Left' src='static/buttons/PS4/PS4_Dpad_Left.png' width='40'>   |<img alt='Dpad Left' src='static/buttons/Switch/Switch_Dpad_Left.png' width='40'>   |
 | Skip Intro    | <img alt='Start' src='static/buttons/Xbox%20One/XboxOne_Menu.png' width='40'>            | <img alt='Start' src='static/buttons/PS4/PS4_Options.png' width='40'>         |<img alt='Start' src='static/buttons/Switch/Switch_Home.png' width='40'>            |
-| Previous Episode  | <img alt='RB' src='static/buttons/Xbox%20One/XboxOne_LB.png' width='40'>                 | <img alt='R1' src='static/buttons/PS4/PS4_L1.png' width='40'>                 |<img alt='R' src='static/buttons/Switch/Switch_LB.png' width='40'>                 |
+<!-- | Previous Episode  | <img alt='RB' src='static/buttons/Xbox%20One/XboxOne_LB.png' width='40'>                 | <img alt='R1' src='static/buttons/PS4/PS4_L1.png' width='40'>                 |<img alt='R' src='static/buttons/Switch/Switch_LB.png' width='40'>                 | -->
 | Next Episode  | <img alt='RB' src='static/buttons/Xbox%20One/XboxOne_RB.png' width='40'>                 | <img alt='R1' src='static/buttons/PS4/PS4_R1.png' width='40'>                 |<img alt='R' src='static/buttons/Switch/Switch_RB.png' width='40'>                 |
 
 ## Screenshots
