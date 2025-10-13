@@ -1,21 +1,12 @@
 {
     "name": "Netflix Controller",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "description": "Control Netflix in your browser with a gamepad or controller.",
-    "manifest_version": 2,
-    "permissions": [
-        "*://*.netflix.com/*",
-        "declarativeContent",
-        "tabs",
-        "storage"
-    ],
+    "manifest_version": 3,
+    "permissions": ["storage", "tabs", "scripting"],
+    "host_permissions": ["*://*.netflix.com/*"],
     "background": {
-        "scripts": [
-            "static/js/live-storage@1.0.2.js",
-            "app/options/settings.js",
-            "app/background.js"
-        ],
-        "persistent": false
+        "service_worker": "app/background/sw.js"
     },
     "content_scripts": [
         {
@@ -58,24 +49,27 @@
             "css": ["static/styles/content.css"]
         }
     ],
-    "options_page": "app/options/options.html",
-    "page_action": {
+    "action": {
         "default_popup": "app/popups/popup.html",
         "default_icon": {
             "16": "static/icon16.png",
-            "32": "static/icon32.png",
             "48": "static/icon48.png",
             "128": "static/icon128.png"
         }
     },
+    "options_ui": {
+        "page": "app/options/options.html",
+        "open_in_tab": true
+    },
     "icons": {
         "16": "static/icon16.png",
-        "32": "static/icon32.png",
         "48": "static/icon48.png",
         "128": "static/icon128.png"
     },
     "web_accessible_resources": [
-        "static/buttons/*/*.png",
-        "static/styles/content.css"
+        {
+            "resources": ["static/buttons/*/*.png", "static/styles/content.css"],
+            "matches": ["*://*.netflix.com/*"]
+        }
     ]
 }
