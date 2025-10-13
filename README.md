@@ -77,6 +77,8 @@ Add Netflix Controller to your browser [here](https://chrome.google.com/webstore
 ## Changelog
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.0.7 | May 8, 2021 | Add Steam Deck support by @jumplink. |
+| 1.0.6 | May 8, 2021 | Add Switch controller support by @matsumurae. |
 | 1.0.5 | October 25, 2020 | Updated the fullscreen action in the video player to remove the debugger popup message. |
 | 1.0.4 | July 25, 2020 | Fixed the title panel handler. |
 | 1.0.3 | June 3, 2020 | Fixed the billboard handler and added support for the latest page. |
