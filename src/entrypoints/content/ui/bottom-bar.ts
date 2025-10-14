@@ -1,4 +1,7 @@
 export class BottomBarContainer {
+    children: BottomBar[];
+    container: HTMLDivElement;
+
     constructor() {
         this.children = [];
         this.container = document.createElement('div');
@@ -6,36 +9,39 @@ export class BottomBarContainer {
         document.body.append(this.container);
     }
 
-    build() {
+    build(): void {
         while (this.container.lastChild) {
             this.container.removeChild(this.container.lastChild);
         }
         this.children.sort((a, b) => b.getPriority() - a.getPriority());
-        for (let child of this.children) {
-            this.container.append(child.element);
+        for (const child of this.children) {
+            this.container.append(child.element!);
         }
     }
 
-    add(element) {
+    add(element: BottomBar): void {
         this.children.push(element);
         this.build();
     }
 
-    remove(element) {
+    remove(element: BottomBar): void {
         this.children = this.children.filter(e => e !== element);
         this.build();
     }
 
-    hide() {
+    hide(): void {
         this.container.classList.add('gamepad-interface-hidden-faded');
     }
 
-    show() {
+    show(): void {
         this.container.classList.remove('gamepad-interface-hidden-faded');
     }
 }
 
 export class BottomBar {
+    static container: BottomBarContainer;
+    element: HTMLElement | null;
+
     constructor() {
         if (new.target === BottomBar) {
             throw new TypeError('cannot instantiate abstract BottomBar');
@@ -43,24 +49,25 @@ export class BottomBar {
         if (!BottomBar.container) {
             BottomBar.container = new BottomBarContainer();
         }
+        this.element = null;
     }
 
-    createBar() {
+    createBar(): HTMLElement {
         throw new TypeError('must implement abstract BottomBar#createBar');
     }
 
-    getPriority() {
+    getPriority(): number {
         return 0;
     }
 
-    add() {
+    add(): void {
         if (!this.element) {
             this.element = this.createBar();
             BottomBar.container.add(this);
         }
     }
 
-    remove() {
+    remove(): void {
         if (this.element) {
             BottomBar.container.remove(this);
             this.element = null;

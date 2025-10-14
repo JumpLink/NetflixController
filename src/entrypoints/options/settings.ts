@@ -1,4 +1,14 @@
-export const OPTIONS = [
+interface Option {
+    label: string;
+    name: string;
+    storageArea: 'sync' | 'local';
+    type: 'checkbox' | 'combobox';
+    default: boolean | string;
+    values?: string[];
+    condition?: Record<string, any>;
+}
+
+export const OPTIONS: Option[] = [
     {
         label: 'Show gamepad interaction hints',
         name: 'showActionHints',

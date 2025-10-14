@@ -1,10 +1,25 @@
-import { InteractiveChoices } from '../components/choices.js';
-import { NavigatablePage } from './page.js';
-import { StandardMapping } from '../../../utils/gamepads.js';
+import { InteractiveChoices } from '../components/choices.ts';
+import { NavigatablePage } from './page.ts';
+import { StandardMapping } from '../../../utils/gamepads.ts';
 import { BottomBar } from '../ui/bottom-bar.js';
 import { ActionHandler } from '../ui/actions.js';
 
 export class WatchVideo extends NavigatablePage {
+    player: Element | null;
+    sizingWrapper: Element | null;
+    inactivityTimer: number | null;
+    postplay: boolean;
+    hasInteractiveChoices: boolean;
+    hasNextEpisode: boolean;
+    hasSkipIntro: boolean;
+    controlObserver!: MutationObserver;
+    skipObserver!: MutationObserver;
+    interactiveObserver!: MutationObserver;
+    backAction: any;
+    skipIntroAction: any;
+    nextEpisodeAction: any;
+    actionHandler: ActionHandler;
+
     constructor() {
         super();
         this.player = null;
@@ -35,30 +50,32 @@ export class WatchVideo extends NavigatablePage {
             index: StandardMapping.Button.BUMPER_RIGHT,
             onPress: () => this.openNextEpisode()
         };
-        this.actionHandler = new ActionHandler();
+        this.actionHandler = new ActionHandler(storage);
     }
 
-    static validatePath(path) {
+    static validatePath(path: string): boolean {
         return path.startsWith('/watch');
     }
 
-    onLoad() {
+    onLoad(): void {
         super.onLoad();
         // The sizing wrapper is the fullscreen element if set via the player.
         // We identify the sizing wrapper here to set the video to full screen.
-        this.sizingWrapper = document.querySelector('.sizing-wrapper')
-        this.player = this.sizingWrapper.querySelector('.NFPlayer');
-        this.showNextEpisode(this.player.classList.contains('nextEpisodeSeamless'));
+        this.sizingWrapper = document.querySelector('.sizing-wrapper');
+        this.player = this.sizingWrapper?.querySelector('.NFPlayer') || null;
+        if (this.player) {
+            this.showNextEpisode(this.player.classList.contains('nextEpisodeSeamless'));
+        }
         this.observePlayerState();
         this.observeSkipIntro();
         this.observeInteractiveChoices();
         this.setActivityTimer();
     }
 
-    onUnload() {
-        this.controlObserver.disconnect();
-        this.skipObserver.disconnect();
-        this.interactiveObserver.disconnect();
+    onUnload(): void {
+        if (this.controlObserver) this.controlObserver.disconnect();
+        if (this.skipObserver) this.skipObserver.disconnect();
+        if (this.interactiveObserver) this.interactiveObserver.disconnect();
         if (this.inactivityTimer) {
             clearTimeout(this.inactivityTimer);
         }
@@ -66,71 +83,77 @@ export class WatchVideo extends NavigatablePage {
         super.onUnload();
     }
 
-    isPageReady() {
+    isPageReady(): boolean {
         return document.querySelector('.NFPlayer') !== null;
     }
 
-    observePlayerState() {
-        this.controlObserver = new MutationObserver((mutations) => {
-            for (let mutation of mutations) {
-                this.hideControls(mutation.target.classList.contains('inactive'));
-                this.showNextEpisode(mutation.target.classList.contains('nextEpisodeSeamless'));
+    observePlayerState(): void {
+        this.controlObserver = new MutationObserver((mutations: MutationRecord[]) => {
+            for (const mutation of mutations) {
+                this.hideControls((mutation.target as Element).classList.contains('inactive'));
+                this.showNextEpisode((mutation.target as Element).classList.contains('nextEpisodeSeamless'));
             }
         });
-        this.controlObserver.observe(this.player, { attributes: true, attributeFilter: [ 'class' ]});
+        if (this.player) {
+            this.controlObserver.observe(this.player, { attributes: true, attributeFilter: ['class'] });
+        }
     }
 
-    observeSkipIntro() {
-        let controls = this.player.querySelector('.PlayerControlsNeo__layout');
-        this.checkForElementWithClass(controls.childNodes, true, 'skip-credits',
-                () => this.showSkipIntro(true));
-        this.skipObserver = this.watchForElementsWithClass(controls, false,
-                'skip-credits', (found) => this.showSkipIntro(found));
+    observeSkipIntro(): void {
+        const controls = this.player?.querySelector('.PlayerControlsNeo__layout');
+        if (controls) {
+            this.checkForElementWithClass(controls.childNodes, true, 'skip-credits',
+                    () => this.showSkipIntro(true));
+            this.skipObserver = this.watchForElementsWithClass(controls, false,
+                    'skip-credits', (found: boolean) => this.showSkipIntro(found));
+        }
     }
 
-    observeInteractiveChoices() {
-        let controls = this.player.querySelector('.PlayerControlsNeo__all-controls');
-        this.interactiveObserver = new MutationObserver((mutations) => {
-            for (let mutation of mutations) {
-                this.checkForElementMatchingSelector(mutation.addedNodes, true, '.BranchingInteractiveScene--wrapper', () => this.setInteractiveMode(true));
-                this.checkForElementMatchingSelector(mutation.removedNodes, false, '.BranchingInteractiveScene--wrapper', () => this.setInteractiveMode(false));
-                this.checkForElementMatchingSelector(mutation.addedNodes, true, '.SeamlessControls--container', () => this.setPostPlay(true));
-                this.checkForElementMatchingSelector(mutation.removedNodes, false, '.SeamlessControls--container', () => this.setPostPlay(false));
-            }
-        });
-        this.interactiveObserver.observe(controls, { childList: true });
+    observeInteractiveChoices(): void {
+        const controls = this.player?.querySelector('.PlayerControlsNeo__all-controls');
+        if (controls) {
+            this.interactiveObserver = new MutationObserver((mutations: MutationRecord[]) => {
+                for (const mutation of mutations) {
+                    this.checkForElementMatchingSelector(mutation.addedNodes, true, '.BranchingInteractiveScene--wrapper', () => this.setInteractiveMode(true));
+                    this.checkForElementMatchingSelector(mutation.removedNodes, false, '.BranchingInteractiveScene--wrapper', () => this.setInteractiveMode(false));
+                    this.checkForElementMatchingSelector(mutation.addedNodes, true, '.SeamlessControls--container', () => this.setPostPlay(true));
+                    this.checkForElementMatchingSelector(mutation.removedNodes, false, '.SeamlessControls--container', () => this.setPostPlay(false));
+                }
+            });
+            this.interactiveObserver.observe(controls, { childList: true });
+        }
     }
 
-    watchForElementsWithClass(node, subtree, className, callback) {
-        let observer = new MutationObserver((mutations) => {
-            for (let mutation of mutations) {
+    watchForElementsWithClass(node: Element, subtree: boolean, className: string, callback: (found: boolean) => void): MutationObserver {
+        const observer = new MutationObserver((mutations: MutationRecord[]) => {
+            for (const mutation of mutations) {
                 this.checkForElementWithClass(mutation.addedNodes, true, className, callback);
                 this.checkForElementWithClass(mutation.removedNodes, false, className, callback);
             }
         });
-        observer.observe(node, { childList: true, subtree: subtree });
+        observer.observe(node, { childList: true, subtree });
         return observer;
     }
 
-    checkForElementWithClass(nodeList, isAddedList, className, callback) {
-        for (let node of nodeList) {
-            if (node.nodeType === 1 && node.classList.contains(className)) {
+    checkForElementWithClass(nodeList: NodeList, isAddedList: boolean, className: string, callback: (added: boolean) => void): void {
+        for (const node of Array.from(nodeList)) {
+            if (node.nodeType === 1 && (node as Element).classList.contains(className)) {
                 callback(isAddedList);
                 return;
             }
         }
     }
 
-    checkForElementMatchingSelector(nodeList, isAddedList, selector, callback) {
-        for (let node of nodeList) {
-            if (node.nodeType == 1 && node.querySelector(selector)) {
+    checkForElementMatchingSelector(nodeList: NodeList, isAddedList: boolean, selector: string, callback: (added: boolean) => void): void {
+        for (const node of Array.from(nodeList)) {
+            if (node.nodeType === 1 && (node as Element).querySelector(selector)) {
                 callback(isAddedList);
                 return;
             }
         }
     }
 
-    showSkipIntro(canSkip) {
+    showSkipIntro(canSkip: boolean): void {
         this.hasSkipIntro = canSkip;
         if (canSkip) {
             this.actionHandler.addAction(this.skipIntroAction);
@@ -139,7 +162,7 @@ export class WatchVideo extends NavigatablePage {
         }
     }
 
-    setPostPlay(postplay) {
+    setPostPlay(postplay: boolean): void {
         if (postplay) {
             this.actionHandler.removeAll(this.getActions());
             // this.actionHandler.addAction(this.previousEpisodeAction);
@@ -156,7 +179,7 @@ export class WatchVideo extends NavigatablePage {
         }
     }
 
-    setInteractiveMode(interactive) {
+    setInteractiveMode(interactive: boolean): void {
         if (interactive) {
             this.actionHandler.removeAll(this.getActions());
             this.addNavigatable(0, new InteractiveChoices(this.dispatchKey.bind(this)));
@@ -170,7 +193,7 @@ export class WatchVideo extends NavigatablePage {
         }
     }
 
-    hideControls(inactive) {
+    hideControls(inactive: boolean): void {
         if (inactive) {
             BottomBar.container.hide();
         } else {
@@ -187,7 +210,7 @@ export class WatchVideo extends NavigatablePage {
     //     }
     // }
 
-    showNextEpisode(visible) {
+    showNextEpisode(visible: boolean): void {
         this.hasNextEpisode = visible;
         if (visible) {
             this.actionHandler.addAction(this.nextEpisodeAction);
@@ -201,7 +224,7 @@ export class WatchVideo extends NavigatablePage {
             clearTimeout(this.inactivityTimer);
         }
         this.hideControls(false);
-        this.inactivityTimer = setTimeout(() => {
+        this.inactivityTimer = window.setTimeout(() => {
             if (this.hasInteractiveChoices) {
                 // keep the controls visible while choices are present
                 this.setActivityTimer();
@@ -274,14 +297,14 @@ export class WatchVideo extends NavigatablePage {
         ];
     }
 
-    onDirectionAction(direction) {
+    onDirectionAction(direction: number): void {
         // override default direction navigation to do nothing unless interactive
         if (this.hasInteractiveChoices) {
             super.onDirectionAction(direction);
         }
     }
 
-    setNavigatable(position) {
+    setNavigatable(position: number): void {
         if (position === 0) {
             super.setNavigatable(position);
         }
@@ -305,30 +328,32 @@ export class WatchVideo extends NavigatablePage {
         this.clickControl('.button-nfplayerBack', '.BackToBrowse');
     }
 
-    clickControl(playerSelector, postplaySelector) {
+    clickControl(playerSelector: string, postplaySelector?: string): void {
         let control = null;
         if (this.postplay && postplaySelector) {
             control = document.querySelector(postplaySelector);
-        } else {
+        } else if (this.player) {
             control = this.player.querySelector(playerSelector);
         }
         if (control) {
-            control.click();
+            (control as HTMLElement).click();
         }
     }
 
-    dispatchKey(keyCode, isKeyDown=true) {
+    dispatchKey(keyCode: number, isKeyDown: boolean = true): void {
         let event = new KeyboardEvent(isKeyDown ? 'keydown' : 'keyup', {
             key: String.fromCharCode(keyCode),
             keyCode: keyCode, bubbles: true, cancelable: true, view: window
         });
-        this.player.dispatchEvent(event);
+        if (this.player) {
+            this.player.dispatchEvent(event);
+        }
     }
 
-    toggleFullscreen() {
+    toggleFullscreen(): void {
         // For now, ignore the errors thrown by these functions.
         // We likely want a warning-type temporary error bar eventually.
-        if (!document.fullscreenElement) {
+        if (!document.fullscreenElement && this.sizingWrapper) {
             this.sizingWrapper.requestFullscreen().catch(err => {
                 console.warn(`Unable to switch to fullscreen mode: ${err}`)
             });

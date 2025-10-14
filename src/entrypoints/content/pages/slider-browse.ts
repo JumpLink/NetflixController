@@ -1,11 +1,15 @@
 import { Menu } from '../components/menu.js';
 import { Slider } from '../components/slider.js';
 import { Billboard } from '../components/billboard.js';
-import { NavigatablePage } from './page.js';
+import { NavigatablePage } from './page.ts';
 import { Jawbone } from '../components/jawbone.js';
 
 export class SliderBrowse extends NavigatablePage {
-    constructor(loadingRow) {
+    loadingRow: number;
+    currentRow: number;
+    menu!: Menu;
+
+    constructor(loadingRow: number) {
         if (new.target === SliderBrowse) {
             throw new TypeError('cannot instantiate abstract SliderPage');
         }
@@ -14,20 +18,20 @@ export class SliderBrowse extends NavigatablePage {
         this.currentRow = 0;
     }
 
-    onLoad() {
+    onLoad(): void {
         this.menu = new Menu();
         this.addNavigatable(0, this.menu);
     }
 
-    setNavigatable(position) {
+    setNavigatable(position: number): void {
         if (position === this.position + 1) {
             // look for a jawbone if moving to the next navigatable below the current one
             // if a jawbone exists above the current nav, it will already exist in nav list
-            let currentNav = this.navigatables[this.position];
+            const currentNav = this.navigatables[this.position];
             if (currentNav && currentNav.constructor.name === 'Slider') {
-                if (!currentNav.jawboneOpen) {
+                if (!(currentNav as any).jawboneOpen) {
                     // inline jawbone does not have its own row so we must check for it
-                    let jawbone = Jawbone.getJawbone(currentNav.row, currentNav);
+                    const jawbone = Jawbone.getJawbone((currentNav as any).row, currentNav);
                     if (jawbone) {
                         if (jawbone.replacedEarlierJawbone) {
                             position--;
@@ -39,7 +43,7 @@ export class SliderBrowse extends NavigatablePage {
         }
         if (!this.isNavigatable(position)) {
             // no jawbone found, check for other navigatables like slider/billboard
-            let nextNav = this.getNextNavigatable();
+            const nextNav = this.getNextNavigatable();
             if (nextNav) {
                 this.addNavigatable(position, nextNav);
             }
@@ -49,11 +53,11 @@ export class SliderBrowse extends NavigatablePage {
         }
     }
 
-    getNextNavigatable() {
-        let currentNav = this.navigatables[this.position];
+    getNextNavigatable(): any {
+        const currentNav = this.navigatables[this.position];
         if (currentNav && 'row' in currentNav) {
-            let nextRow = currentNav.row + 1;
-            let rowNode = document.getElementById(`row-${nextRow}`);
+            const nextRow = (currentNav as any).row + 1;
+            const rowNode = document.getElementById(`row-${nextRow}`);
             if (rowNode) {
                 if (rowNode.querySelector('.slider')) {
                     return new Slider(nextRow, rowNode);
@@ -69,23 +73,23 @@ export class SliderBrowse extends NavigatablePage {
 
     // .mainView has additional children while loading, so wait until it has only 1.
     // additionally waits until the row content has loaded in by checking width.
-    isPageReady() {
-        if (window.isKeyboardActive && window.isKeyboardActive()) {
+    isPageReady(): boolean {
+        if ((window as any).isKeyboardActive && (window as any).isKeyboardActive()) {
             return false;
         }
-        let mainView = document.querySelector('.mainView');
+        const mainView = document.querySelector('.mainView');
         if (mainView && mainView.childElementCount === 1) {
-            let row = document.querySelector(`#row-${this.loadingRow}`);
+            const row = document.querySelector(`#row-${this.loadingRow}`);
             return row ? row.getBoundingClientRect().width > 0 : false;
         }
         return false;
     }
 
-    needsPseudoStyler() {
+    needsPseudoStyler(): boolean {
         return true;
     }
 
-    hasSearchBar() {
+    hasSearchBar(): boolean {
         return true;
     }
 }

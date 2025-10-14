@@ -1,7 +1,14 @@
-import PseudoStyler from '../../../utils/pseudostyler.js';
-import { DIRECTION } from '../components/direction.js';
+import PseudoStyler from '../../../utils/pseudostyler.ts';
+import { DIRECTION } from '../components/direction.ts';
+import { Navigatable } from '../components/navigatable.ts';
 
 export class NavigatablePage {
+    navigatables: (Navigatable | null)[];
+    loaded: boolean;
+    unloaded: boolean;
+    position: number;
+    styler: PseudoStyler | null;
+
     constructor() {
         if (new.target === NavigatablePage) {
             throw new TypeError('cannot instantiate abstract NavigatablePage');
@@ -9,24 +16,26 @@ export class NavigatablePage {
         this.navigatables = [];
         this.loaded = false;
         this.unloaded = false;
+        this.position = 0;
+        this.styler = null;
     }
 
-    async load() {
+    async load(): Promise<void> {
         await Promise.all([this.loadPseudoStyler(), this.waitUntilReady()]);
         if (!this.unloaded) {
             this.onLoad();
-            window.actionHandler.addAll(this.getActions());
-            window.actionHandler.onInput = () => this.onInput();
+            (window as any).actionHandler.addAll(this.getActions());
+            (window as any).actionHandler.onInput = () => this.onInput();
             this.loaded = true;
         }
     }
 
     // to be implemented by subclass
-    onLoad() {
+    onLoad(): void {
 
     }
 
-    async loadPseudoStyler() {
+    async loadPseudoStyler(): Promise<void> {
         if (this.needsPseudoStyler()) {
             this.styler = new PseudoStyler();
             return this.styler.loadDocumentStyles();
@@ -35,9 +44,9 @@ export class NavigatablePage {
     }
 
     // via https://stackoverflow.com/a/30506051/1247781
-    waitUntilReady() {
-        let _this = this;
-        return new Promise((resolve, reject) => {
+    waitUntilReady(): Promise<void> {
+        const _this = this;
+        return new Promise<void>((resolve) => {
             (function checkReadiness() {
                 if (_this.unloaded || _this.isPageReady()) {
                     return resolve();
@@ -47,7 +56,7 @@ export class NavigatablePage {
         });
     }
 
-    unload() {
+    unload(): void {
         this.unloaded = true;
         if (this.loaded) {
             this.onUnload();
@@ -55,85 +64,85 @@ export class NavigatablePage {
     }
 
     // to be overriden by subclasses
-    onUnload() {
-        this.navigatables.forEach(navigatable => navigatable.exit());
-        window.actionHandler.removeAll(this.getActions());
-        window.actionHandler.onInput = null;
+    onUnload(): void {
+        this.navigatables.forEach(navigatable => navigatable?.exit());
+        (window as any).actionHandler.removeAll(this.getActions());
+        (window as any).actionHandler.onInput = null;
     }
 
     // to be overriden by subclasses
-    isPageReady() {
+    isPageReady(): boolean {
         return true;
     }
 
     // to be overriden by subclasses
-    needsPseudoStyler() {
+    needsPseudoStyler(): boolean {
         return false;
     }
 
     // to be overriden by subclasses
-    hasSearchBar() {
+    hasSearchBar(): boolean {
         return false;
     }
 
-    hasPath() {
+    hasPath(): boolean {
         return true;
     }
 
     // to be overriden by subclasses
-    onInput() {
+    onInput(): void {
 
     }
 
     // to be overriden by subclasses
-    getActions() {
+    getActions(): any[] {
         return [];
     }
 
     // static validatePath(path) must be implemented by subclasses
 
-    isNavigatable(position) {
+    isNavigatable(position: number): boolean {
         return position < this.navigatables.length;
     }
 
-    setNavigatable(position) {
+    setNavigatable(position: number): void {
         if (!this.isNavigatable(position)) {
-            throw new Error('no navigatable at position ' + position)
+            throw new Error('no navigatable at position ' + position);
         }
-        let params = this.exit();
+        const params = this.exit();
         this.position = position;
         this.enter(params);
     }
 
-    addNavigatable(position, navigatable) {
+    addNavigatable(position: number, navigatable: Navigatable | null): void {
         if (this.styler && navigatable !== null) {
-            navigatable.styler = this.styler;
+            (navigatable as any).styler = this.styler;
         }
         this.navigatables.splice(position, 0, navigatable);
     }
 
-    removeNavigatable(arg) {
+    removeNavigatable(arg: number | Navigatable): void {
         let position = arg;
         if (typeof arg === 'object') {
             // find and remove object argument
             position = this.navigatables.indexOf(arg);
         }
-        if (position >= 0) {
+        if (typeof position === 'number' && position >= 0) {
             this.navigatables.splice(position, 1);
         }
     }
 
-    removeCurrentNavigatable() {
-        let params = this.exit();
+    removeCurrentNavigatable(): void {
+        const params = this.exit();
         this.removeNavigatable(this.position);
         this.position--;
         this.enter(params);
     }
 
-    exit() {
+    exit(): any {
         if (this.navigatables[this.position]) {
-            let exitParams = this.navigatables[this.position].exit();
-            window.actionHandler.removeAll(this.navigatables[this.position].getActions());
+            const exitParams = this.navigatables[this.position]?.exit();
+            (window as any).actionHandler.removeAll(this.navigatables[this.position]?.getActions());
             if (exitParams) {
                 return exitParams;
             }
@@ -141,14 +150,14 @@ export class NavigatablePage {
         return {};
     }
 
-    enter(params) {
+    enter(params: any): void {
         if (this.navigatables[this.position]) {
-            this.navigatables[this.position].enter(params);
-            window.actionHandler.addAll(this.navigatables[this.position].getActions());
+            this.navigatables[this.position]?.enter(params);
+            (window as any).actionHandler.addAll(this.navigatables[this.position]?.getActions());
         }
     }
 
-    onDirectionAction(direction) {
+    onDirectionAction(direction: number): void {
         if (direction === DIRECTION.UP) {
             if (this.position > 0) {
                 this.setNavigatable(this.position - 1);
@@ -156,9 +165,9 @@ export class NavigatablePage {
         } else if (direction === DIRECTION.DOWN) {
             this.setNavigatable(this.position + 1);
         } else if (direction === DIRECTION.LEFT) {
-            this.navigatables[this.position].left();
+            this.navigatables[this.position]?.left();
         } else if (direction === DIRECTION.RIGHT) {
-            this.navigatables[this.position].right();
+            this.navigatables[this.position]?.right();
         }
     }
 }

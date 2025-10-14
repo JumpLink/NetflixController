@@ -1,30 +1,30 @@
 import { Profiles } from '../components/profiles.js';
-import { NavigatablePage } from './page.js';
+import { NavigatablePage } from './page.ts';
 
 export class ChooseProfile extends NavigatablePage {
-    static validatePath(path) {
+    static validatePath(_path: string): boolean {
         // can occur at any path; check for element
         return document.querySelector('.list-profiles') !== null;
     }
 
-    hasPath() {
+    hasPath(): boolean {
         return false;
     }
 
-    onLoad() {
+    onLoad(): void {
         this.addNavigatable(0, new Profiles());
         this.setNavigatable(0);
     }
 
-    isPageReady() {
+    isPageReady(): boolean {
         return document.querySelector('.list-profiles') !== null;
     }
 
-    needsPseudoStyler() {
+    needsPseudoStyler(): boolean {
         return true;
     }
 
-    setNavigatable(position) {
+    setNavigatable(position: number): void {
         if (position === 0) {
             super.setNavigatable(position);
         }
