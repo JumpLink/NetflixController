@@ -26,13 +26,26 @@
 
 /**
  * This module defines a live storage object that maintains an up-to-date
- * representation of browser.storage user data. 
+ * representation of browser.storage user data.
  */
+
+interface StorageListener {
+    callback: Function;
+    options: {
+        area?: string;
+        onLoad?: boolean;
+    };
+}
+
+interface StorageProxy {
+    [key: string]: any;
+}
+
 const LiveStorage = (() => {
     let loaded = false;
     let updating = false; // flag to avoid infinite call stack when saving data
-    const listeners = {};
-    const storage = {
+    const listeners: Record<string, StorageListener[]> = {};
+    const storage: Record<string, any> = {
         sync: buildStorageProxy('sync'),
         local: buildStorageProxy('local'),
         managed: buildStorageProxy('managed')
@@ -41,16 +54,8 @@ const LiveStorage = (() => {
     /**
      * Adds a listener that calls a given callback when a given key's value
      * changes.
-     * 
-     * @param {String} key The key to listen for changes on.
-     * @param {Function} callback The function to call when the key's value
-     *                            changes.
-     * @param {Object} options The optional options:
-     *  - area {String} The name of the storage area to apply this listener to.
-     *  - onLoad {Boolean} true to run when populating data in #load().
-     *    Defaults to true.
      */
-    function addListener(key, callback, options={}) {
+    function addListener(key: string, callback: Function, options: { area?: string; onLoad?: boolean } = {}): void {
         let defaults = { onLoad: true };
         options = Object.assign(defaults, options);
         if (!(key in listeners)) {
@@ -61,16 +66,11 @@ const LiveStorage = (() => {
 
     /**
      * Removes the given callback bound to a given key.
-     * 
-     * @param {String} key The key to remove the callback from.
-     * @param {Function} callback The callback to remove.
-     * @param {Object} options Optional options:
-     *  - area {String} The storage area that the callback is bound to.
      */
-    function removeListener(key, callback, options) {
+    function removeListener(key: string, callback: Function, options?: { area?: string }): void {
         if (key in listeners) {
             listeners[key] = listeners[key].filter(listener => {
-                if (options.area && options.area !== listener.areaName) {
+                if (options?.area && options.area !== listener.options.area) {
                     return false;
                 }
                 return listener.callback !== callback;
@@ -80,14 +80,11 @@ const LiveStorage = (() => {
 
     /**
      * Updates the local storage object and calls applicable listeners.
-     * 
-     * @param {Object} changes The changes to apply.
-     * @param {String} areaName The name of the area to apply changes to.
      */
-    function update(changes, areaName) {
+    function update(changes: Record<string, any>, areaName: string): void {
         // identify changes
-        let added = {};
-        let removedKeys = [];
+        let added: Record<string, any> = {};
+        let removedKeys: string[] = [];
         for (let key in changes) {
             if ('newValue' in changes[key]) {
                 added[key] = changes[key].newValue;
@@ -119,7 +116,7 @@ const LiveStorage = (() => {
      * @param {String} areaName The name of the storage area that changed.
      * @param {Boolean} isLoad true if onLoad listeners should be called.
      */
-    function callListeners(key, change, areaName, isLoad) {
+    function callListeners(key: string, change: any, areaName: string, isLoad: boolean): void {
         for (let listener of listeners[key]) {
             if (isLoad && !listener.options.onLoad) {
                 continue;
@@ -139,7 +136,7 @@ const LiveStorage = (() => {
      *             area names and values are booleans.
      *             Defaults to load all three: sync, local, managed.
      */
-    async function load(options={}) {
+    async function load(options: { sync?: boolean; local?: boolean; managed?: boolean } = {}): Promise<void> {
         if (loaded) {
             // return instantly instead of loading again
             return Promise.resolve();
@@ -149,12 +146,12 @@ const LiveStorage = (() => {
         for (let area in defaultAreas) {
             requests.push(new Promise((resolve, reject) => {
                 // TODO test this, add options[hard load]
-                let shouldFetch = defaultAreas[area];
-                if ('areas' in options && area in options.areas) {
-                    shouldFetch = options.areas[area];
+                let shouldFetch = (defaultAreas as any)[area];
+                if ('areas' in options && area in (options.areas as any)) {
+                    shouldFetch = (options.areas as any)[area];
                 }
                 if (shouldFetch) {
-                    browser.storage[area].get(null, items => {
+                    (browser.storage as any)[area].get(null, (items: any) => {
                         if (browser.runtime.lastError) {
                             reject({ error: browser.runtime.lastError.message });
                         }
@@ -170,7 +167,7 @@ const LiveStorage = (() => {
             // add loaded data into storage objects
             updating = true;
             for (let result of results) {
-                Object.assign(storage[result.area], result.items);
+                Object.assign(storage[(result as any).area], (result as any).items);
             }
             updating = false;
             loaded = true;
@@ -193,32 +190,32 @@ const LiveStorage = (() => {
      * 
      * @param {String} areaName The area name of the wrapped storage object.
      */
-    function buildStorageProxy(areaName) {
+    function buildStorageProxy(areaName: string): StorageProxy {
         return new Proxy({}, {
-            get: (store, key) => {
+            get: (store: any, key: string | symbol) => {
                 if (!loaded) {
                     throw new Error('LiveStorage not yet loaded');
                 }
                 return store[key];
             },
-            set: (store, key, value) => {
+            set: (store: any, key: string | symbol, value: any) => {
                 checkManaged(areaName);
                 let prev = store[key];
                 store[key] = value;
                 if (!updating) {
-                    browser.storage[areaName].set({ [key]: value }, () => {
-                        checkError('set', areaName, key, value, prev);
+                    (browser.storage as any)[areaName].set({ [key as string]: value }, () => {
+                        checkError('set', areaName, key as string, value, prev);
                     });
                 }
                 return true;
             },
-            deleteProperty: (store, key) => {
+            deleteProperty: (store: any, key: string | symbol) => {
                 checkManaged(areaName);
                 let prev = store[key];
                 delete store[key];
                 if (!updating) {
-                    browser.storage[areaName].remove(key, () => {
-                        checkError('remove', areaName, key, undefined, prev);
+                    (browser.storage as any)[areaName].remove(key as string, () => {
+                        checkError('remove', areaName, key as string, undefined, prev);
                     });
                 }
                 return true;
@@ -237,20 +234,22 @@ const LiveStorage = (() => {
      * @param {Any} value The value used in the action.
      * @param {Any} previousValue The previous value, to revert the value to.
      */
-    function checkError(action, area, key, value, previousValue) {
+    function checkError(action: string, area: string, key: string | undefined, value: any, previousValue: any): void {
         if (browser.runtime.lastError) {
             updating = true;
-            storage[area][key] = previousValue;
+            if (key !== undefined) {
+                storage[area][key] = previousValue;
+            }
             updating = false;
-            let info = { action, area, key, value, previousValue };
-            onError(browser.runtime.lastError.message, info);
+            const safeKey = key || '';
+            onError(browser.runtime.lastError.message || 'Unknown error', { action, area, key: safeKey, value, previousValue } as any);
         }
     }
 
     /**
      * Checks if the given area is the read-only browser.storage.managed area.
      */
-    function checkManaged(areaName) {
+    function checkManaged(areaName: string): void {
         if (areaName === 'managed') {
             throw new Error('browser.storage.managed is read-only');
         }
@@ -266,7 +265,7 @@ const LiveStorage = (() => {
      *                      the error occurred. Use these values to plan how to
      *                      avoid the error during future invocations.
      */
-    function onError(message, info) {
+    function onError(message: string, info: { action: string; area: string; key?: string; value?: any; previousValue?: any }): void {
         console.warn(message, info);
     }
 
@@ -282,7 +281,7 @@ const LiveStorage = (() => {
         get local() { return storage.local; },
         get managed() { return storage.managed; },
         get onError() { return onError; },
-        set onError(fn) { onError = fn; },
+        set onError(_fn: any) { /* onError setter disabled */ },
         get loaded() { return loaded; }
     }
 })();

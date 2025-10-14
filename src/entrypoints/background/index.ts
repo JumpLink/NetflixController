@@ -1,4 +1,4 @@
-import LiveStorage from '../../utils/live-storage.js';
+import LiveStorage from '../../utils/live-storage.ts';
 import { OPTIONS } from '../options/settings.js';
 import type { BrowserTab, RuntimeInstalledDetails, TabChangeInfo } from '../../types/browser';
 import type { LiveStorageInstance } from '../../types/storage';

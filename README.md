@@ -73,11 +73,12 @@ Add Netflix Controller to your browser [here](https://chrome.google.com/webstore
 * Xbox controller image courtesy of http://gamepadviewer.com/
 * Project icons courtesy of https://material.io/icons/ and https://iconfu.com.
 * Many thanks to [Tyler Sedlar](https://github.com/TSedlar) for creating pseudo:styler and for letting me bounce ideas off of him throughout development of this project.
+* [Xelui's Keyboard and controllers prompts pack](https://github.com/DJLink/Xelu_Free_Controller-Key_Prompts) for the controller button packs
 
 ## Changelog
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.0.7 | May 8, 2021 | Add Steam Deck support by @jumplink. |
+| 1.0.7 | May 8, 2021 | WIP @jumplink. |
 | 1.0.6 | May 8, 2021 | Add Switch controller support by @matsumurae. |
 | 1.0.5 | October 25, 2020 | Updated the fullscreen action in the video player to remove the debugger popup message. |
 | 1.0.4 | July 25, 2020 | Fixed the title panel handler. |

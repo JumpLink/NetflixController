@@ -1,4 +1,4 @@
-import LiveStorage from '../../utils/live-storage.js';
+import LiveStorage from '../../utils/live-storage.ts';
 import { OPTIONS } from './settings.js';
 
 const storage = LiveStorage;

@@ -1,3 +1,9 @@
+interface GamepadMapping {
+    name: string;
+    filePrefix: string;
+    buttons: string[];
+}
+
 // untested
 const PS3Mapping = {
     name: 'PS3',
@@ -58,36 +64,48 @@ const SwitchMapping = {
 
 const ALL_MAPPINGS = [ PS3Mapping, PS4Mapping, Xbox360Mapping, XboxOneMapping, SwitchMapping ]
 
+interface GamepadButtonInfo {
+    mappingName: string;
+    buttonName: string;
+    buttonImageSrc: string;
+}
+
 // avoid naming collision with DOM's GamepadButton
-class _GamepadButton {
-    constructor(mappingName, buttonName, buttonImageSrc) {
-        this.mappingName = mappingName
-        this.buttonName = buttonName
-        this.buttonImageSrc = buttonImageSrc
+class _GamepadButton implements GamepadButtonInfo {
+    mappingName: string;
+    buttonName: string;
+    buttonImageSrc: string;
+
+    constructor(mappingName: string, buttonName: string, buttonImageSrc: string) {
+        this.mappingName = mappingName;
+        this.buttonName = buttonName;
+        this.buttonImageSrc = buttonImageSrc;
     }
 }
 
 class GamepadIconHandler {
+    buttonsPath: string = '/buttons';
+    mappings: Record<string, GamepadMapping> = {};
+    static _instance: GamepadIconHandler | null = null;
+
     constructor() {
         if (GamepadIconHandler._instance) {
-            return GamepadIconHandler._instance
+            return GamepadIconHandler._instance;
         }
-        this.buttonsPath = '/buttons'
-        this.mappings = {}
         for (let mapping of ALL_MAPPINGS) {
-            this.mappings[mapping.name] = mapping
+            this.mappings[mapping.name] = mapping;
         }
-        GamepadIconHandler._instance = this
+        GamepadIconHandler._instance = this;
     }
 
-    getButton(mappingName, index) {
+    getButton(mappingName: string, index: number): _GamepadButton | null {
         if (mappingName in this.mappings && index in this.mappings[mappingName].buttons) {
-            let buttonName = this.mappings[mappingName].buttons[index]
-            let buttonImageFile = this.mappings[mappingName].filePrefix + buttonName + '.png'
-            let buttonImageSrc = this.buttonsPath + '/' + mappingName + '/' + buttonImageFile
-            return new _GamepadButton(mappingName, buttonName, buttonImageSrc)
+            let buttonName = this.mappings[mappingName].buttons[index];
+            let buttonImageFile = this.mappings[mappingName].filePrefix + buttonName + '.png';
+            let buttonImageSrc = this.buttonsPath + '/' + mappingName + '/' + buttonImageFile;
+            return new _GamepadButton(mappingName, buttonName, buttonImageSrc);
         }
-        return null
+        return null;
     }
 }
 

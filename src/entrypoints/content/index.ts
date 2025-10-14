@@ -1,6 +1,6 @@
-import LiveStorage from '../../utils/live-storage.js';
-import { gamepads, StandardMapping } from '../../utils/gamepads.js';
-import { gamepadMappings } from '../../utils/gamepad-icons.js';
+import LiveStorage from '../../utils/live-storage.ts';
+import { gamepads, StandardMapping } from '../../utils/gamepads.ts';
+import { gamepadMappings } from '../../utils/gamepad-icons.ts';
 import type { LiveStorageInstance } from '../../types/storage';
 import type { ContentScriptMessage } from '../../types/messages';
 
