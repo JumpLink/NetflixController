@@ -1,5 +1,6 @@
 {
   "name": "netflix-controller",
+  "private": true,
   "version": "1.0.7",
   "description": "Control Netflix in your browser with a gamepad or controller using this browser extension",
   "keywords": [
@@ -20,6 +21,22 @@
   "type": "module",
   "main": "dist/app/content/content.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "postinstall": "wxt prepare"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.1.24",
+    "typescript": "^5.9.3",
+    "wxt": "^0.20.11"
+  },
+  "pnpm": {
+    "overrides": {
+      "@wxt-dev/browser": "^0.1.4"
+    }
   }
 }
