@@ -1,8 +1,8 @@
-import LiveStorage from '../../utils/live-storage@1.0.2.js';
+import LiveStorage from '../../utils/live-storage.js';
 import { OPTIONS } from './settings.js';
 
 const storage = LiveStorage;
-const manifest = chrome.runtime.getManifest();
+const manifest = browser.runtime.getManifest();
 document.querySelectorAll('.extension-name').forEach(elem => {
     elem.textContent = manifest.name;
 });

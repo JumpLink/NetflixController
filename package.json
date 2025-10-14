@@ -27,7 +27,8 @@
     "build:firefox": "wxt build -b firefox",
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
-    "postinstall": "wxt prepare"
+    "postinstall": "wxt prepare",
+    "check": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/chrome": "^0.1.24",

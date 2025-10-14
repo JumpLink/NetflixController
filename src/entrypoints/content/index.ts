@@ -1,6 +1,8 @@
-import LiveStorage from '../../utils/live-storage@1.0.2.js';
-import { gamepads, StandardMapping } from '../../utils/gamepads@1.2.2.js';
-import { gamepadMappings } from '../../utils/gamepad-icons@1.2.2.js';
+import LiveStorage from '../../utils/live-storage.js';
+import { gamepads, StandardMapping } from '../../utils/gamepads.js';
+import { gamepadMappings } from '../../utils/gamepad-icons.js';
+import type { LiveStorageInstance } from '../../types/storage';
+import type { ContentScriptMessage } from '../../types/messages';
 
 // Import CSS - WXT will automatically add this to the manifest
 import '../../../public/assets/styles/content.css';
@@ -29,28 +31,27 @@ export default defineContentScript({
   matches: ['*://*.netflix.com/*'],
   main() {
 
-const storage = LiveStorage;
-const manifest = chrome.runtime.getManifest();
+const storage: LiveStorageInstance = LiveStorage;
 const ERROR_ALERT_DURATION = 10000;
 const NETFLIX_RED = 'rgba(229, 9, 20)';
 
-function getTransparentNetflixRed(opacity) {
+function getTransparentNetflixRed(opacity: number): string {
     return NETFLIX_RED.replace(')', ', ' + opacity + ')');
 }
 
 gamepadMappings.buttonsPath = 'assets/buttons';
 
-let currentPath = null;
+let currentPath: string | null = null;
 let numGamepads = 0;
 let hasConnectedGamepad = false;
-let keyboard = null;
-let handlerHistory = [];
-let currentHandler = null;
-let actionHandler = new ActionHandler(storage);
-let connectionHintBar = new ConnectionHintBar();
-let compatibilityWarning = new CompatibilityWarningBar();
-let errorBar = new ErrorBar();
-const pageHandlers = [
+let keyboard: any = null;
+let handlerHistory: any[] = [];
+let currentHandler: any = null;
+let actionHandler: any = new ActionHandler(storage);
+let connectionHintBar: any = new ConnectionHintBar();
+let compatibilityWarning: any = new CompatibilityWarningBar();
+let errorBar: any = new ErrorBar();
+const pageHandlers: any[] = [
     ChooseProfile,
     FeaturedBrowse,
     FeaturelessBrowse,
@@ -60,13 +61,13 @@ const pageHandlers = [
     WatchVideo
 ];
 
-const searchAction = {
+const searchAction: any = {
     label: 'Search',
     index: StandardMapping.Button.BUTTON_TOP,
     onPress: openSearch
 };
 
-const backAction = {
+const backAction: any = {
     label: 'Back',
     index: StandardMapping.Button.BUTTON_RIGHT,
     onPress: goBack
@@ -83,7 +84,7 @@ storage.load().then(() => {
     updateCompatibility();
 });
 
-chrome.runtime.onMessage.addListener((request, sender, sendMessage) => {
+browser.runtime.onMessage.addListener((request: ContentScriptMessage, _sender: any, _sendMessage: any) => {
     if (request.message === 'locationChanged') {
         if (hasConnectedGamepad) {
             // load plugin core only if user is using gamepad in this session
@@ -96,7 +97,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendMessage) => {
     }
 });
 
-async function runHandler(path, forceLoad=false) {
+async function runHandler(path: string, forceLoad: boolean = false) {
     if (forceLoad || path !== currentPath) {
         unload();
         refreshPageIfBad();
@@ -115,7 +116,7 @@ async function runHandler(path, forceLoad=false) {
     }
 }
 
-async function loadPage(handlerClass) {
+async function loadPage(handlerClass: any) {
     currentHandler = new handlerClass();
     if (currentHandler.hasPath()) {
         addHistory();
@@ -124,7 +125,7 @@ async function loadPage(handlerClass) {
     try {
         await currentHandler.load();
     } catch (error) {
-        showError(error);
+        showError(error as any);
     }
 }
 
@@ -154,7 +155,7 @@ function setPageActions() {
         } else {
             actionHandler.removeAction(backAction);
         }
-        actionHandler.onDirection = currentHandler.onDirectionAction.bind(currentHandler);
+        (actionHandler as any).onDirection = currentHandler.onDirectionAction.bind(currentHandler);
     }
 }
 
@@ -183,30 +184,30 @@ function updateCompatibility() {
     }
 }
 
-function showError(error, timeout=-1) {
+function showError(error: Error, timeout: number = -1) {
     console.error(error);
     errorBar.setError(error.message, timeout);
     errorBar.add();
 }
 
-function showTempError(error) {
+function showTempError(error: Error) {
     showError(error, ERROR_ALERT_DURATION);
 }
 
-function log(message) {
+function log(message: string) {
     console.log(`NETFLIX-CONTROLLER: ${message}`);
 }
 
-function warn(message) {
+function warn(message: string) {
     console.warn(`NETFLIX-CONTROLLER: ${message}`);
 }
 
 function isStandardGamepadConnected() {
-    return Object.values(gamepads.gamepads).some(g => g.gamepad.mapping === 'standard');
+    return Object.values(gamepads.gamepads || {}).some((g: any) => g.gamepad.mapping === 'standard');
 }
 
 log('Listening for gamepad connections.');
-gamepads.addEventListener('connect', e => {
+gamepads.addEventListener('connect', (e: any) => {
     if (!hasConnectedGamepad) {
         // first connection, run current page handler manually
         observeProfilePopup();
@@ -218,30 +219,30 @@ gamepads.addEventListener('connect', e => {
     showActionHints();
     updateCompatibility();
     log(`Gamepad connected: ${e.gamepad.gamepad.id}`);
-    e.gamepad.addEventListener('buttonpress', e => {
+    e.gamepad.addEventListener('buttonpress', (e: any) => {
         try {
-            actionHandler.onButtonPress(e.index);
+            (actionHandler as any).onButtonPress(e.index);
         } catch (error) {
-            showTempError(error);
+            showTempError(error as any);
         }
     })
-    e.gamepad.addEventListener('buttonrelease', e => {
+    e.gamepad.addEventListener('buttonrelease', (e: any) => {
         try {
-            actionHandler.onButtonRelease(e.index);
+            (actionHandler as any).onButtonRelease(e.index);
         } catch (error) {
-            showTempError(error);
+            showTempError(error as any);
         }
     })
-    e.gamepad.addEventListener('joystickmove', e => {
+    e.gamepad.addEventListener('joystickmove', (e: any) => {
         try {
             checkJoystickDirection(e.gamepad, e.horizontalIndex, e.horizontalValue, DIRECTION.RIGHT, DIRECTION.LEFT);
             checkJoystickDirection(e.gamepad, e.verticalIndex, e.verticalValue, DIRECTION.DOWN, DIRECTION.UP);
         } catch (error) {
-            showTempError(error);
+            showTempError(error as any);
         }
     }, StandardMapping.Axis.JOYSTICK_LEFT);
 })
-gamepads.addEventListener('disconnect', e => {
+gamepads.addEventListener('disconnect', (e: any) => {
     numGamepads--;
     if (numGamepads === 0) {
         actionHandler.hideHints();
@@ -253,10 +254,10 @@ gamepads.addEventListener('disconnect', e => {
 gamepads.start();
 
 // TODO: rethink this messy code; integrate rate limited polling into gamepads.js?
-let timeouts = {};
-let directions = {};
+let timeouts: Record<number, any> = {};
+let directions: Record<number, any> = {};
 
-function checkJoystickDirection(gamepad, axis, value, pos, neg) {
+function checkJoystickDirection(gamepad: any, axis: number, value: number, pos: any, neg: any) {
     if (Math.abs(value) >= 1 - gamepad.joystickDeadzone) {
         let direction = value > 0 ? pos : neg;
         if (!(axis in directions) || directions[axis] !== direction) {
@@ -272,7 +273,7 @@ function checkJoystickDirection(gamepad, axis, value, pos, neg) {
     }
 }
 
-function rateLimitJoystickDirection(axis, rateMillis) {
+function rateLimitJoystickDirection(axis: number, rateMillis: number) {
     if (directions[axis] !== -1) {
         actionHandler.onDirection(directions[axis]);
         timeouts[axis] = setTimeout(() => rateLimitJoystickDirection(axis, rateMillis), rateMillis);
@@ -280,29 +281,34 @@ function rateLimitJoystickDirection(axis, rateMillis) {
 }
 
 function openSearch() {
-    let searchButton = document.querySelector('.searchTab');
+    let searchButton = document.querySelector('.searchTab') as HTMLElement;
     if (searchButton) {
         searchButton.click();
     }
-    let searchInput = document.querySelector('.searchInput > input[type=text]');
-    let searchParent = searchInput.parentElement.parentElement;
+    let searchInput = document.querySelector('.searchInput > input[type=text]') as HTMLInputElement;
+    if (!searchInput) return;
+    let searchParent = searchInput.parentElement?.parentElement;
+    if (!searchParent) return;
     let startingLocation = window.location.href;
-    let handlerState = currentHandler.exit();
-    Navigatable.scrollIntoView(searchInput);
+    let handlerState = currentHandler?.exit();
+    (Navigatable as any).scrollIntoView(searchInput);
 
     keyboard = VirtualKeyboard.create(searchInput, searchParent, () => {
-        actionHandler.removeAll(keyboard.getActions());
-        if (window.location.href === startingLocation) {
+        if (keyboard) {
+            (actionHandler as any).removeAll(keyboard.getActions());
+        }
+        if (window.location.href === startingLocation && currentHandler) {
             currentHandler.enter(handlerState);
         }
         keyboard = null;
         setPageActions();
     });
 
-    let searchContainer = document.querySelector('.secondary-navigation');
-    let closeObserver = new MutationObserver((mutations) => {
+    let searchContainer = document.querySelector('.secondary-navigation') as HTMLElement;
+    if (!searchContainer) return;
+    let closeObserver = new MutationObserver((mutations: MutationRecord[]) => {
         for (let mutation of mutations) {
-            if (!mutation.target.classList.contains('search-focused')) {
+            if (!(mutation.target as Element).classList.contains('search-focused')) {
                 // search bar is no longer focused
                 if (keyboard) {
                     keyboard.close();
@@ -314,8 +320,8 @@ function openSearch() {
     closeObserver.observe(searchContainer, { attributes: true, attributeFilter: [ 'class' ] });
 
     actionHandler.removeAction(searchAction);
-    actionHandler.addAll(keyboard.getActions());
-    actionHandler.onDirection = keyboard.onDirectionAction.bind(keyboard);
+    (actionHandler as any).addAll(keyboard.getActions());
+    (actionHandler as any).onDirection = keyboard.onDirectionAction.bind(keyboard);
 }
 
 function goBack() {
@@ -328,7 +334,7 @@ function goBack() {
 
 // track history to ensure we don't go back to a non-Netflix page
 function addHistory() {
-    let location = new URL(window.location);
+    let location = new URL(window.location.href);
     if (handlerHistory.length > 0) {
         let last = handlerHistory[handlerHistory.length - 1];
         if (last !== location.pathname) {
@@ -341,10 +347,11 @@ function addHistory() {
 
 function observeProfilePopup() {
     let root = document.getElementById('appMountPoint');
+    if (!root) return;
     let observer = new MutationObserver((mutations) => {
         for (let mutation of mutations) {
             for (let node of mutation.addedNodes) {
-                if (node.nodeType === 1 && node.classList.contains('profiles-gate-container')) {
+                if (node.nodeType === 1 && (node as Element).classList.contains('profiles-gate-container')) {
                     unload();
                     loadPage(ChooseProfile);
                 }
@@ -356,10 +363,10 @@ function observeProfilePopup() {
 
 // Make functions globally available for other modules
 // TODO: Cleaner exportable solution?
-window.runHandler = runHandler;
-window.currentHandler = currentHandler;
-window.actionHandler = actionHandler;
-window.getTransparentNetflixRed = getTransparentNetflixRed;
-window.isKeyboardActive = () => keyboard !== null;
+(window as any).runHandler = runHandler;
+(window as any).currentHandler = currentHandler;
+(window as any).actionHandler = actionHandler;
+(window as any).getTransparentNetflixRed = getTransparentNetflixRed;
+(window as any).isKeyboardActive = () => keyboard !== null;
   }
 });

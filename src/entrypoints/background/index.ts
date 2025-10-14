@@ -1,11 +1,13 @@
-import LiveStorage from '../../utils/live-storage@1.0.2.js';
+import LiveStorage from '../../utils/live-storage.js';
 import { OPTIONS } from '../options/settings.js';
+import type { BrowserTab, RuntimeInstalledDetails, TabChangeInfo } from '../../types/browser';
+import type { LiveStorageInstance } from '../../types/storage';
 
 export default defineBackground(() => {
-    const storage = LiveStorage;
+    const storage: LiveStorageInstance = LiveStorage;
 
     // Initialize extension
-    chrome.runtime.onInstalled.addListener(details => {
+    browser.runtime.onInstalled.addListener((details: RuntimeInstalledDetails) => {
         if (details.reason === 'install') {
             storage.load().then(() => setDefaultSettings());
             setDefaultSettings();
@@ -14,24 +16,24 @@ export default defineBackground(() => {
         // The action will be available on all tabs
     });
 
-    chrome.runtime.onStartup.addListener(() => {
+    browser.runtime.onStartup.addListener(() => {
         storage.load();
     });
 
     // Set default settings
     function setDefaultSettings() {
         for (let option of OPTIONS) {
-            storage[option.storageArea][option.name] = option.default;
+            (storage as any)[option.storageArea][option.name] = option.default;
         }
     }
 
     // Inform the content script of any changes to the Netflix's URL path
-    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-        if (tab.active && tab.status === 'complete' && changeInfo.status && changeInfo.status === 'complete') {
+    browser.tabs.onUpdated.addListener((tabId: number, changeInfo: TabChangeInfo, tab: BrowserTab) => {
+        if (tab.active && tab.status === 'complete' && changeInfo.status && changeInfo.status === 'complete' && tab.url) {
             try {
                 let url = new URL(tab.url);
                 if (url.hostname.endsWith('.netflix.com') && !url.hostname.startsWith('help.')) {
-                    chrome.tabs.sendMessage(tabId, {
+                    browser.tabs.sendMessage(tabId, {
                         message: 'locationChanged',
                         path: url.pathname
                     }).catch(() => {
@@ -45,10 +47,10 @@ export default defineBackground(() => {
     });
 
     // Handle action clicks (when user clicks the extension icon)
-    chrome.action.onClicked.addListener(async (tab) => {
-        if (tab.url && tab.url.includes('netflix.com')) {
+    browser.action.onClicked.addListener(async (tab: BrowserTab) => {
+        if (tab.url && tab.url.includes('netflix.com') && tab.id !== undefined) {
             try {
-                await chrome.scripting.executeScript({
+                await browser.scripting.executeScript({
                     target: { tabId: tab.id },
                     files: ["app/content/content.js"]
                 });

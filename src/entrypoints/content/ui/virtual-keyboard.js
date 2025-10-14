@@ -1,4 +1,4 @@
-import { StandardMapping } from '../../../utils/gamepads@1.2.2.js';
+import { StandardMapping } from '../../../utils/gamepads.js';
 import { DIRECTION } from '../components/direction.js';
 
 const SHIFT = '\u21e7';

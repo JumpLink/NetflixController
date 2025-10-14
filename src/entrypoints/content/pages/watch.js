@@ -1,6 +1,6 @@
 import { InteractiveChoices } from '../components/choices.js';
 import { NavigatablePage } from './page.js';
-import { StandardMapping } from '../../../utils/gamepads@1.2.2.js';
+import { StandardMapping } from '../../../utils/gamepads.js';
 import { BottomBar } from '../ui/bottom-bar.js';
 import { ActionHandler } from '../ui/actions.js';
 

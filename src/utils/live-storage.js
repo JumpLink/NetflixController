@@ -1,5 +1,5 @@
 /**
- * Source: https://github.com/FThompson/ChromeLiveStorage
+ * Source: https://github.com/FThompson/browserLiveStorage
  *
  * MIT License
  * 
@@ -26,7 +26,7 @@
 
 /**
  * This module defines a live storage object that maintains an up-to-date
- * representation of chrome.storage user data. 
+ * representation of browser.storage user data. 
  */
 const LiveStorage = (() => {
     let loaded = false;
@@ -132,7 +132,7 @@ const LiveStorage = (() => {
     }
 
     /**
-     * Async loads data from chrome.storage and calls applicable callbacks.
+     * Async loads data from browser.storage and calls applicable callbacks.
      * 
      * @param {Object} options Optional options:
      *  - {Object} areas The areas to load data into, where the keys are
@@ -154,9 +154,9 @@ const LiveStorage = (() => {
                     shouldFetch = options.areas[area];
                 }
                 if (shouldFetch) {
-                    chrome.storage[area].get(null, items => {
-                        if (chrome.runtime.lastError) {
-                            reject({ error: chrome.runtime.lastError.message });
+                    browser.storage[area].get(null, items => {
+                        if (browser.runtime.lastError) {
+                            reject({ error: browser.runtime.lastError.message });
                         }
                         resolve({ area, items });
                     });
@@ -166,7 +166,7 @@ const LiveStorage = (() => {
             }));
         }
         return Promise.all(requests).then(results => {
-            chrome.storage.onChanged.addListener(update);
+            browser.storage.onChanged.addListener(update);
             // add loaded data into storage objects
             updating = true;
             for (let result of results) {
@@ -187,9 +187,9 @@ const LiveStorage = (() => {
     }
 
     /**
-     * Creates a storage data object proxy that calls chrome.storage functions
+     * Creates a storage data object proxy that calls browser.storage functions
      * when modifying storage data. This proxy also enforces read-only access
-     * for the "managed" chrome.storage area.
+     * for the "managed" browser.storage area.
      * 
      * @param {String} areaName The area name of the wrapped storage object.
      */
@@ -206,7 +206,7 @@ const LiveStorage = (() => {
                 let prev = store[key];
                 store[key] = value;
                 if (!updating) {
-                    chrome.storage[areaName].set({ [key]: value }, () => {
+                    browser.storage[areaName].set({ [key]: value }, () => {
                         checkError('set', areaName, key, value, prev);
                     });
                 }
@@ -217,7 +217,7 @@ const LiveStorage = (() => {
                 let prev = store[key];
                 delete store[key];
                 if (!updating) {
-                    chrome.storage[areaName].remove(key, () => {
+                    browser.storage[areaName].remove(key, () => {
                         checkError('remove', areaName, key, undefined, prev);
                     });
                 }
@@ -227,7 +227,7 @@ const LiveStorage = (() => {
     }
 
     /**
-     * Checks if a chrome.runtime error occurred and if so, reverts the live
+     * Checks if a browser.runtime error occurred and if so, reverts the live
      * storage to undo the change on which the error occurred. This function
      * also calls onError, passing the error message and error content info.
      * 
@@ -238,30 +238,30 @@ const LiveStorage = (() => {
      * @param {Any} previousValue The previous value, to revert the value to.
      */
     function checkError(action, area, key, value, previousValue) {
-        if (chrome.runtime.lastError) {
+        if (browser.runtime.lastError) {
             updating = true;
             storage[area][key] = previousValue;
             updating = false;
             let info = { action, area, key, value, previousValue };
-            onError(chrome.runtime.lastError.message, info);
+            onError(browser.runtime.lastError.message, info);
         }
     }
 
     /**
-     * Checks if the given area is the read-only chrome.storage.managed area.
+     * Checks if the given area is the read-only browser.storage.managed area.
      */
     function checkManaged(areaName) {
         if (areaName === 'managed') {
-            throw new Error('chrome.storage.managed is read-only');
+            throw new Error('browser.storage.managed is read-only');
         }
     }
 
     /**
-     * Handles errors that occur in chrome.storage set/remove function calls.
+     * Handles errors that occur in browser.storage set/remove function calls.
      * This function should be defined to supply users with meaningful error
      * messages. The default implementation shows a console warning.
      * 
-     * @param {String} message The message from `chrome.runtime.lastError`.
+     * @param {String} message The message from `browser.runtime.lastError`.
      * @param {Object} info Info containing the area, key, and value for which
      *                      the error occurred. Use these values to plan how to
      *                      avoid the error during future invocations.

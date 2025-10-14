@@ -1,4 +1,4 @@
-import PseudoStyler from '../../../utils/pseudostyler@1.0.8.js';
+import PseudoStyler from '../../../utils/pseudostyler.js';
 import { DIRECTION } from '../components/direction.js';
 
 export class NavigatablePage {

@@ -1,5 +1,5 @@
-import { StandardMapping } from '../../../utils/gamepads@1.2.2.js';
-import { gamepadMappings } from '../../../utils/gamepad-icons@1.2.2.js';
+import { StandardMapping } from '../../../utils/gamepads.js';
+import { gamepadMappings } from '../../../utils/gamepad-icons.js';
 import { DIRECTION } from '../components/direction.js';
 import { BottomBar } from './bottom-bar.js';
 
@@ -98,7 +98,7 @@ export class ActionHintsBar extends BottomBar {
         let buttonMapping = this.storage.sync.buttonImageMapping || 'Xbox One';
         let button = gamepadMappings.getButton(buttonMapping, action.index);
         if (button) {
-            let imageSrc = chrome.runtime.getURL(button.buttonImageSrc);
+            let imageSrc = browser.runtime.getURL(button.buttonImageSrc);
             return (
                 `<div class='gamepad-interface-hint'>
                     <img src='${imageSrc}' alt='${button.buttonName}'>
