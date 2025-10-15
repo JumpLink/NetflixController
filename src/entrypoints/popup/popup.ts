@@ -1,6 +1,7 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: Popup script handles dynamic gamepad events and interactions requiring flexible typing for event handlers and button state tracking. */
+import type { GamepadState } from "../../types/gamepad";
+import { GamepadEventManager } from "../../utils/gamepad-events.ts";
 import { gamepadMappings } from "../../utils/gamepad-icons.ts";
-import { Gamepads, StandardMapping } from "../../utils/gamepads.ts";
+import { Gamepads } from "../../utils/gamepads.ts";
 import * as S from "../../utils/storage-items";
 
 let currentMapping = "Xbox One";
@@ -12,7 +13,7 @@ const DOT_SIZE = parseFloat(style.getPropertyValue("--joystick-size"));
 const DOT_POSITION = (CONTAINER_SIZE - DOT_SIZE) / 2;
 
 let count = 0;
-const pressedButtons: Record<number, any> = {};
+const pressedButtons: Record<number, HTMLImageElement> = {};
 
 // disable gamepad input on page while popup is open
 browser.tabs.query({ currentWindow: true, active: true }, (tabs) => {
@@ -49,35 +50,39 @@ S.buttonImageMapping.onChanged((v) => {
 	}
 });
 
-Gamepads.addEventListener("connect", (e: any) => {
+Gamepads.addEventListener("connect", (e: unknown) => {
+	const event = e as { gamepad: GamepadState };
 	console.log("Gamepad connected:");
-	console.log(e.gamepad);
+	console.log(event.gamepad);
 	const countElement = document.getElementById("count");
 	if (countElement) {
 		countElement.textContent = (++count).toString();
 	}
 	updateCompatibility();
-	e.gamepad.addEventListener("buttonpress", (e: any) =>
-		showPressedButton(e.index),
+
+	// Add button event listeners
+	GamepadEventManager.addButtonListeners(
+		event.gamepad,
+		(index: number) => showPressedButton(index),
+		(index: number) => removePressedButton(index),
 	);
-	e.gamepad.addEventListener("buttonrelease", (e: any) =>
-		removePressedButton(e.index),
-	);
-	e.gamepad.addEventListener(
-		"joystickmove",
-		(e: any) => moveJoystick(e.values, true),
-		StandardMapping.Axis.JOYSTICK_LEFT,
-	);
-	e.gamepad.addEventListener(
-		"joystickmove",
-		(e: any) => moveJoystick(e.values, false),
-		StandardMapping.Axis.JOYSTICK_RIGHT,
-	);
+
+	// Add joystick event listeners
+	GamepadEventManager.addJoystickListener(event.gamepad, {
+		callback: (e) => moveJoystick(e.values, true),
+		isLeftJoystick: true,
+	});
+
+	GamepadEventManager.addJoystickListener(event.gamepad, {
+		callback: (e) => moveJoystick(e.values, false),
+		isLeftJoystick: false,
+	});
 });
 
-Gamepads.addEventListener("disconnect", (e: any) => {
+Gamepads.addEventListener("disconnect", (e: unknown) => {
+	const event = e as { gamepad: GamepadState };
 	console.log("Gamepad disconnected:");
-	console.log(e.gamepad);
+	console.log(event.gamepad);
 	const countElement = document.getElementById("count");
 	if (countElement) {
 		countElement.textContent = (--count).toString();
@@ -147,7 +152,7 @@ function updateCompatibility() {
 	if (warning) {
 		if (
 			!Object.values(Gamepads.gamepads || {}).some(
-				(g: any) => g.gamepad.mapping === "standard",
+				(g: GamepadState) => g.mapping === "standard",
 			)
 		) {
 			warning.style.display = "block";

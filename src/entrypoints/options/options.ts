@@ -1,6 +1,5 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: Options page works with dynamic DOM elements and storage APIs requiring flexible typing for option controls, change events, and DOM element methods. */
 import * as S from "../../utils/storage-items";
-import { OPTIONS } from "./settings.ts";
+import { OPTIONS, type Option } from "./settings.ts";
 
 // Initialize values and change listeners
 const manifest = browser.runtime.getManifest();
@@ -12,7 +11,7 @@ if (versionElement) {
 	versionElement.textContent = manifest.version;
 }
 
-const dependencies: Record<string, Record<string, any>> = {};
+const dependencies: Record<string, Record<string, unknown>> = {};
 
 for (const option of OPTIONS) {
 	insertOptionControl(option);
@@ -48,10 +47,10 @@ S.showCompatibilityWarning.onChanged((v) =>
 	updateDisplayedSetting("showCompatibilityWarning", v),
 );
 
-function updateDisplayedSetting(key: string, value: any): void {
+function updateDisplayedSetting(key: string, value: unknown): void {
 	const element = document.getElementById(key);
 	if (element && "setValue" in element) {
-		(element as any).setValue(value);
+		(element as { setValue: (value: unknown) => void }).setValue(value);
 	}
 	checkDependencies(key);
 }
@@ -65,7 +64,8 @@ function checkDependencies(controlKey: string): void {
 			if (
 				element &&
 				"getValue" in element &&
-				(element as any).getValue() !== controlDependencies[key]
+				(element as { getValue: () => unknown }).getValue() !==
+					controlDependencies[key]
 			) {
 				shouldEnable = false;
 				break;
@@ -92,7 +92,7 @@ function enableControl(controlKey: string, enabled: boolean): void {
 	}
 }
 
-function insertOptionControl(option: any): void {
+function insertOptionControl(option: Option): void {
 	const container = document.getElementById("settings");
 	if (!container) return;
 
@@ -131,11 +131,11 @@ function insertOptionControl(option: any): void {
 	}
 }
 
-function createCheckbox(option: any): HTMLInputElement {
+function createCheckbox(option: Option): HTMLInputElement {
 	const checkbox = document.createElement("input");
 	checkbox.type = "checkbox";
 	checkbox.id = option.name;
-	checkbox.checked = option.default;
+	checkbox.checked = option.default as boolean;
 	checkbox.addEventListener("change", () => {
 		if (option.name === "showActionHints") {
 			S.showActionHints.set(checkbox.checked);
@@ -145,17 +145,27 @@ function createCheckbox(option: any): HTMLInputElement {
 			S.showCompatibilityWarning.set(checkbox.checked);
 		}
 	});
-	(checkbox as any).getValue = () => checkbox.checked;
-	(checkbox as any).setValue = (value: boolean) => {
+	(
+		checkbox as unknown as {
+			getValue: () => boolean;
+			setValue: (value: boolean) => void;
+		}
+	).getValue = () => checkbox.checked;
+	(
+		checkbox as unknown as {
+			getValue: () => boolean;
+			setValue: (value: boolean) => void;
+		}
+	).setValue = (value: boolean) => {
 		checkbox.checked = value;
 	};
 	return checkbox;
 }
 
-function createCombobox(option: any): HTMLSelectElement {
+function createCombobox(option: Option): HTMLSelectElement {
 	const combobox = document.createElement("select");
 	combobox.id = option.name;
-	for (const value of option.values) {
+	for (const value of option.values ?? []) {
 		const boxOption = document.createElement("option");
 		boxOption.value = value;
 		boxOption.textContent = value;
@@ -169,8 +179,18 @@ function createCombobox(option: any): HTMLSelectElement {
 			S.buttonImageMapping.set(combobox.value);
 		}
 	});
-	(combobox as any).getValue = () => combobox.value;
-	(combobox as any).setValue = (value: string) => {
+	(
+		combobox as unknown as {
+			getValue: () => string;
+			setValue: (value: string) => void;
+		}
+	).getValue = () => combobox.value;
+	(
+		combobox as unknown as {
+			getValue: () => string;
+			setValue: (value: string) => void;
+		}
+	).setValue = (value: string) => {
 		combobox.value = value;
 	};
 	return combobox;

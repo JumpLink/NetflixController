@@ -1,5 +1,3 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: Browser extension APIs are inherently dynamic with variable message structures and return types requiring any types for full compatibility. */
-
 // Browser extension specific types
 
 export interface BrowserTab {
@@ -37,11 +35,15 @@ export interface BrowserRuntime {
 	};
 	onMessage: {
 		addListener(
-			callback: (message: any, sender: any, sendResponse: any) => void,
+			callback: (
+				message: unknown,
+				sender: unknown,
+				sendResponse: unknown,
+			) => void,
 		): void;
 	};
-	getManifest(): any;
-	sendMessage(message: any): Promise<any>;
+	getManifest(): unknown;
+	sendMessage(message: unknown): Promise<unknown>;
 }
 
 export interface BrowserTabs {
@@ -54,7 +56,7 @@ export interface BrowserTabs {
 			) => void,
 		): void;
 	};
-	sendMessage(tabId: number, message: any): Promise<any>;
+	sendMessage(tabId: number, message: unknown): Promise<unknown>;
 }
 
 export interface BrowserAction {
@@ -64,7 +66,7 @@ export interface BrowserAction {
 }
 
 export interface BrowserScripting {
-	executeScript(options: ExecuteScriptOptions): Promise<any>;
+	executeScript(options: ExecuteScriptOptions): Promise<unknown>;
 }
 
 export interface BrowserAPI {

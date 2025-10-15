@@ -1,8 +1,8 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: Content script handles dynamic gamepad events, keyboard interactions, and browser APIs requiring flexible typing for event handlers and global exports. */
-import type { NavigationAction } from "../../types/components";
+import type { ExitResult, NavigationAction } from "../../types/components";
 import type { GamepadState } from "../../types/gamepad";
 import type { ContentScriptMessage } from "../../types/messages";
 import type { Settings } from "../../types/settings";
+import { GamepadEventManager } from "../../utils/gamepad-events.ts";
 import { gamepadMappings } from "../../utils/gamepad-icons.ts";
 import { Gamepads, StandardMapping } from "../../utils/gamepads.ts";
 import * as S from "../../utils/storage-items";
@@ -57,7 +57,15 @@ export default defineContentScript({
 		const connectionHintBar = new ConnectionHintBarImpl();
 		const compatibilityWarning = new CompatibilityWarningBarImpl();
 		const errorBar = new ErrorBarImpl();
-		const pageHandlers: any[] = [
+		const pageHandlers: (
+			| typeof ChooseProfile
+			| typeof FeaturedBrowse
+			| typeof FeaturelessBrowse
+			| typeof LatestBrowse
+			| typeof TitleBrowse
+			| typeof SearchBrowse
+			| typeof WatchVideo
+		)[] = [
 			ChooseProfile,
 			FeaturedBrowse,
 			FeaturelessBrowse,
@@ -132,9 +140,9 @@ export default defineContentScript({
 						runHandler(request.path);
 					}
 				} else if (request.message === "disableGamepadInput") {
-					gamepads.stop();
+					Gamepads.stop();
 				} else if (request.message === "enableGamepadInput") {
-					gamepads.start();
+					Gamepads.start();
 				}
 			},
 		);
@@ -145,8 +153,14 @@ export default defineContentScript({
 				refreshPageIfBad();
 				let found = false;
 				for (let i = 0; !found && i < pageHandlers.length; i++) {
-					if ((pageHandlers[i] as any).validatePath(path)) {
-						log(`Loading ${(pageHandlers[i] as any).name} module for ${path}`);
+					if (
+						(
+							pageHandlers[i] as { validatePath: (path: string) => boolean }
+						).validatePath(path)
+					) {
+						log(
+							`Loading ${(pageHandlers[i] as { name: string }).name} module for ${path}`,
+						);
 						await loadPage(pageHandlers[i]);
 						found = true;
 					}
@@ -158,7 +172,16 @@ export default defineContentScript({
 			}
 		}
 
-		async function loadPage(handlerClass: any) {
+		async function loadPage(
+			handlerClass:
+				| typeof ChooseProfile
+				| typeof FeaturedBrowse
+				| typeof FeaturelessBrowse
+				| typeof LatestBrowse
+				| typeof TitleBrowse
+				| typeof SearchBrowse
+				| typeof WatchVideo,
+		) {
 			currentHandler = new handlerClass();
 			if (currentHandler?.hasPath()) {
 				addHistory();
@@ -260,18 +283,19 @@ export default defineContentScript({
 		}
 
 		log("Listening for gamepad connections.");
+
 		// Native gamepad events for diagnostics
-		window.addEventListener("gamepadconnected", (e: any) => {
+		window.addEventListener("gamepadconnected", (e: GamepadEvent) => {
 			console.log("Native gamepadconnected:", e.gamepad?.id, e);
 		});
-		window.addEventListener("gamepaddisconnected", (e: any) => {
+		window.addEventListener("gamepaddisconnected", (e: GamepadEvent) => {
 			console.log("Native gamepaddisconnected:", e.gamepad?.id, e);
 		});
 
 		// Some browsers require a user gesture before Gamepad API starts reporting.
 		function startOnGestureOnce() {
 			try {
-				gamepads.start();
+				Gamepads.start();
 				debugDumpGamepads("gesture-start");
 			} catch (e) {
 				console.warn("Failed to start gamepads on gesture:", e);
@@ -285,7 +309,9 @@ export default defineContentScript({
 		// Temporary debug dump of navigator.getGamepads to verify visibility
 		function debugDumpGamepads(tag: string) {
 			try {
-				const gps = (navigator as any).getGamepads?.() || [];
+				const gps =
+					(navigator as { getGamepads?: () => Gamepad[] }).getGamepads?.() ||
+					[];
 				console.log(`Gamepads[${tag}] count=`, gps.length, gps);
 			} catch (e) {
 				console.warn("navigator.getGamepads failed:", e);
@@ -293,7 +319,8 @@ export default defineContentScript({
 		}
 		setTimeout(() => debugDumpGamepads("t+0.5s"), 500);
 		setTimeout(() => debugDumpGamepads("t+2s"), 2000);
-		gamepads.addEventListener("connect", (e: any) => {
+		Gamepads.addEventListener("connect", (e: unknown) => {
+			const event = e as { gamepad: GamepadState };
 			if (!hasConnectedGamepad) {
 				// first connection, run current page handler manually
 				observeProfilePopup();
@@ -304,17 +331,17 @@ export default defineContentScript({
 			numGamepads++;
 			showActionHints();
 			updateCompatibility();
-			log(`Gamepad connected: ${e.gamepad.gamepad.id}`);
-			e.gamepad.addEventListener("buttonpress", (e: any) => {
+			log(`Gamepad connected: ${event.gamepad.id || "Unknown"}`);
+			event.gamepad.addEventListener("buttonpress", (e: unknown) => {
 				try {
-					actionHandler.onButtonPress(e.index);
+					actionHandler.onButtonPress((e as { index: number }).index);
 				} catch (error) {
 					showTempError(
 						error instanceof Error ? error : new Error(String(error)),
 					);
 				}
 			});
-			e.gamepad.addEventListener("buttonrelease", (e: unknown) => {
+			event.gamepad.addEventListener("buttonrelease", (e: unknown) => {
 				try {
 					actionHandler.onButtonRelease((e as { index: number }).index);
 				} catch (error) {
@@ -323,21 +350,29 @@ export default defineContentScript({
 					);
 				}
 			});
-			e.gamepad.addEventListener(
-				"joystickmove",
-				(e: any) => {
+
+			// Add joystick event listener for navigation
+			GamepadEventManager.addJoystickListener(event.gamepad, {
+				callback: (e) => {
+					const joystickEvent = e as unknown as {
+						gamepad: GamepadState;
+						horizontalIndex: number;
+						horizontalValue: number;
+						verticalIndex: number;
+						verticalValue: number;
+					};
 					try {
 						checkJoystickDirection(
-							e.gamepad,
-							e.horizontalIndex,
-							e.horizontalValue,
+							joystickEvent.gamepad,
+							joystickEvent.horizontalIndex,
+							joystickEvent.horizontalValue,
 							DIRECTION.RIGHT,
 							DIRECTION.LEFT,
 						);
 						checkJoystickDirection(
-							e.gamepad,
-							e.verticalIndex,
-							e.verticalValue,
+							joystickEvent.gamepad,
+							joystickEvent.verticalIndex,
+							joystickEvent.verticalValue,
 							DIRECTION.DOWN,
 							DIRECTION.UP,
 						);
@@ -347,32 +382,33 @@ export default defineContentScript({
 						);
 					}
 				},
-				StandardMapping.Axis.JOYSTICK_LEFT,
-			);
+				isLeftJoystick: true,
+			});
 		});
-		gamepads.addEventListener("disconnect", (e: any) => {
+		Gamepads.addEventListener("disconnect", (e: unknown) => {
+			const event = e as { gamepad: GamepadState };
 			numGamepads--;
 			if (numGamepads === 0) {
 				actionHandler.hideHints();
 			}
 			showConnectionHint();
 			updateCompatibility();
-			log(`Gamepad disconnected: ${e.gamepad.gamepad.id}`);
+			log(`Gamepad disconnected: ${event.gamepad.id || "Unknown"}`);
 		});
-		gamepads.start();
+		Gamepads.start();
 
 		// TODO: rethink this messy code; integrate rate limited polling into gamepads.js?
-		const timeouts: Record<number, any> = {};
-		const directions: Record<number, any> = {};
+		const timeouts: Record<number, NodeJS.Timeout> = {};
+		const directions: Record<number, number> = {};
 
 		function checkJoystickDirection(
-			gamepad: any,
+			gamepad: GamepadState,
 			axis: number,
 			value: number,
-			pos: any,
-			neg: any,
+			pos: number,
+			neg: number,
 		) {
-			if (Math.abs(value) >= 1 - gamepad.joystickDeadzone) {
+			if (Math.abs(value) >= 1 - (gamepad.joystickDeadzone ?? 0.1)) {
 				const direction = value > 0 ? pos : neg;
 				if (!(axis in directions) || directions[axis] !== direction) {
 					directions[axis] = direction;
@@ -410,14 +446,16 @@ export default defineContentScript({
 			if (!searchParent) return;
 			const startingLocation = window.location.href;
 			const handlerState = currentHandler?.exit();
-			(Navigatable as any).scrollIntoView(searchInput);
+			(
+				Navigatable as { scrollIntoView: (element: HTMLElement) => void }
+			).scrollIntoView(searchInput);
 
 			keyboard = VirtualKeyboardImpl.create(searchInput, searchParent, () => {
 				if (keyboard) {
 					actionHandler.removeAll(keyboard.getActions());
 				}
 				if (window.location.href === startingLocation && currentHandler) {
-					currentHandler.enter(handlerState as any);
+					currentHandler.enter(handlerState as ExitResult);
 				}
 				keyboard = null;
 				setPageActions();
@@ -448,9 +486,12 @@ export default defineContentScript({
 			});
 
 			actionHandler.removeAction(searchAction);
-			(actionHandler as any).addAll(keyboard.getActions());
-			(actionHandler as any).onDirection =
-				keyboard.onDirectionAction.bind(keyboard);
+			(
+				actionHandler as { addAll: (actions: NavigationAction[]) => void }
+			).addAll(keyboard.getActions());
+			(
+				actionHandler as { onDirection: ((direction: number) => void) | null }
+			).onDirection = keyboard.onDirectionAction.bind(keyboard);
 		}
 
 		function goBack() {
@@ -510,10 +551,14 @@ export default defineContentScript({
 
 		// Make functions globally available for other modules
 		// TODO: Cleaner exportable solution?
-		(window as any).runHandler = runHandler;
-		(window as any).currentHandler = currentHandler;
-		(window as any).actionHandler = actionHandler;
-		(window as any).getTransparentNetflixRed = getTransparentNetflixRed;
-		(window as any).isKeyboardActive = () => keyboard !== null;
+		(window as unknown as Record<string, unknown>).runHandler = runHandler;
+		(window as unknown as Record<string, unknown>).currentHandler =
+			currentHandler;
+		(window as unknown as Record<string, unknown>).actionHandler =
+			actionHandler;
+		(window as unknown as Record<string, unknown>).getTransparentNetflixRed =
+			getTransparentNetflixRed;
+		(window as unknown as Record<string, unknown>).isKeyboardActive = () =>
+			keyboard !== null;
 	},
 });

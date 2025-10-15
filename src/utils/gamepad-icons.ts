@@ -1,5 +1,3 @@
-/** biome-ignore-all lint/correctness/noConstructorReturn: Singleton pattern implementation requires returning existing instance from constructor. */
-
 interface GamepadMapping {
 	name: string;
 	filePrefix: string;
@@ -158,7 +156,9 @@ class GamepadIconHandler {
 
 	constructor() {
 		if (GamepadIconHandler._instance) {
-			return GamepadIconHandler._instance;
+			// Return the existing instance by copying its properties
+			Object.assign(this, GamepadIconHandler._instance);
+			return;
 		}
 		for (const mapping of ALL_MAPPINGS) {
 			this.mappings[mapping.name] = mapping;

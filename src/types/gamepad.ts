@@ -33,7 +33,11 @@ export interface GamepadState {
 	/** Deadzone value for joystick movement (0-1) */
 	joystickDeadzone?: number;
 	/** Add an event listener to this gamepad */
-	addEventListener(type: string, listener: (...args: unknown[]) => void): void;
+	addEventListener(
+		type: string,
+		listener: (...args: unknown[]) => void,
+		indices?: number[],
+	): void;
 	/** Update the gamepad state from browser data */
 	update(gamepad: unknown): void;
 	/** Internal reference to previous state for comparison */

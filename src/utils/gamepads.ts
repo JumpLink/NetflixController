@@ -24,8 +24,6 @@
  * SOFTWARE.
  */
 
-/** biome-ignore-all lint/suspicious/noExplicitAny lint/complexity/noBannedTypes lint/correctness/noConstructorReturn: Gamepad utilities work with dynamic browser Gamepad API objects requiring any types for event handling and device properties. Function types are used for flexible event listener callbacks. Singleton pattern requires returning existing instance from constructor. */
-
 /**
  * HTML5 Gamepad API Enhancements
  *
@@ -37,6 +35,28 @@
  * @license MIT
  * @author Finn Thompson
  */
+
+// Native browser gamepad interfaces
+interface NativeGamepad {
+	connected: boolean;
+	axes: readonly number[];
+	buttons: readonly GamepadButton[];
+	id: string;
+	index: number;
+	mapping: string;
+	timestamp: number;
+}
+
+interface GamepadButtonState {
+	pressed: boolean;
+	value: number;
+}
+
+interface GamepadLastState {
+	connected: boolean;
+	axes: number[];
+	buttons: GamepadButtonState[];
+}
 
 import type { GamepadButton, GamepadState } from "../types/gamepad.js";
 
@@ -54,7 +74,7 @@ export const Gamepads = (() => {
 		/** Internal flag indicating if polling is paused */
 		_paused: boolean = false;
 		/** Event callback storage for connect/disconnect events */
-		_callbacks: Record<string, Function[]> = {
+		_callbacks: Record<string, ((event: unknown) => void)[]> = {
 			connect: [],
 			disconnect: [],
 		};
@@ -69,7 +89,9 @@ export const Gamepads = (() => {
 		 */
 		constructor() {
 			if (GamepadHandler._instance) {
-				return GamepadHandler._instance;
+				// Return the existing instance by copying its properties
+				Object.assign(this, GamepadHandler._instance);
+				return;
 			}
 			GamepadHandler._instance = this;
 		}
@@ -144,7 +166,7 @@ export const Gamepads = (() => {
 			// check if any tracked gamepads are now absent/disconnected from the browser's gamepads
 			for (const index in this.gamepads) {
 				if (!connectedIndices.includes(index)) {
-					(this.gamepads[index]._last as any).connected = false;
+					(this.gamepads[index]._last as GamepadLastState).connected = false;
 					const event = new GamepadConnectionEvent(
 						this.gamepads[index],
 						"disconnect",
@@ -170,7 +192,7 @@ export const Gamepads = (() => {
 		 * });
 		 * ```
 		 */
-		addEventListener(type: string, listener: Function): void {
+		addEventListener(type: string, listener: (event: unknown) => void): void {
 			if (!this._callbacks[type]) {
 				this._callbacks[type] = [];
 			}
@@ -183,7 +205,10 @@ export const Gamepads = (() => {
 		 * @param type - Event type: 'connect' or 'disconnect'
 		 * @param listener - The callback function to remove
 		 */
-		removeEventListener(type: string, listener: Function): void {
+		removeEventListener(
+			type: string,
+			listener: (event: unknown) => void,
+		): void {
 			if (this._callbacks[type]) {
 				this._callbacks[type] = this._callbacks[type].filter(
 					(callback) => callback !== listener,
@@ -214,13 +239,16 @@ export const Gamepads = (() => {
 	 */
 	class Gamepad implements GamepadState {
 		/** Reference to the native browser gamepad object */
-		gamepad: any;
+		gamepad: NativeGamepad;
 		/** Internal storage for event callbacks organized by type and index */
-		_callbacks: Record<string, Map<any, any>>;
+		_callbacks: Record<
+			string,
+			Map<number | number[], ((event: unknown) => void)[]>
+		>;
 		/** Per-axis deadzone values */
 		_deadzones: Record<number, number>;
 		/** Previous state for change detection */
-		_last: any;
+		_last!: GamepadLastState;
 		/** Default joystick deadzone value */
 		_deadzone: number;
 
@@ -244,7 +272,7 @@ export const Gamepads = (() => {
 		 *
 		 * @param gamepad - The native browser gamepad object
 		 */
-		constructor(gamepad: any) {
+		constructor(gamepad: NativeGamepad) {
 			this.gamepad = gamepad;
 			this._callbacks = {
 				// map required for array keys on joystickmove, used for convenience elsewhere
@@ -257,6 +285,15 @@ export const Gamepads = (() => {
 			this._deadzones = {};
 			this._deadzone = 0.1;
 			this._setLastValues();
+
+			// Initialize properties from the native gamepad
+			this.axes = gamepad.axes;
+			this.buttons = gamepad.buttons;
+			this.connected = gamepad.connected;
+			this.id = gamepad.id;
+			this.index = gamepad.index;
+			this.mapping = gamepad.mapping;
+			this.timestamp = gamepad.timestamp;
 		}
 
 		/**
@@ -268,8 +305,8 @@ export const Gamepads = (() => {
 				connected: this.gamepad.connected,
 				axes: this.gamepad.axes.slice(),
 				buttons: Object.keys(this.gamepad.buttons).map((i: string) => ({
-					pressed: this.gamepad.buttons[i].pressed,
-					value: this.gamepad.buttons[i].value,
+					pressed: this.gamepad.buttons[parseInt(i, 10)].pressed,
+					value: this.gamepad.buttons[parseInt(i, 10)].value,
 				})),
 			};
 		}
@@ -324,7 +361,7 @@ export const Gamepads = (() => {
 		 * @param index - The button index
 		 * @returns The button object with pressed and value properties
 		 */
-		getButton(index: number): any {
+		getButton(index: number): GamepadButton {
 			return this.gamepad.buttons[index];
 		}
 
@@ -383,9 +420,10 @@ export const Gamepads = (() => {
 		 *
 		 * @param gamepad - The updated gamepad object from the browser
 		 */
-		update(gamepad: any): void {
+		update(gamepad: NativeGamepad): void {
 			const updatesReferences = gamepad.timestamp === this.gamepad.timestamp;
-			let oldGamepad: any, newGamepad: any;
+			let oldGamepad: NativeGamepad | GamepadLastState,
+				newGamepad: NativeGamepad;
 			if (!updatesReferences) {
 				// chrome gamepad instances are snapshots
 				oldGamepad = this.gamepad;
@@ -397,11 +435,20 @@ export const Gamepads = (() => {
 				newGamepad = this.gamepad;
 			}
 			if (newGamepad.connected && oldGamepad.connected) {
-				this._compareButtons(newGamepad.buttons, oldGamepad.buttons);
-				this._compareAxes(newGamepad.axes, oldGamepad.axes);
-				this._compareJoysticks(newGamepad.axes, oldGamepad.axes);
+				this._compareButtons([...newGamepad.buttons], [...oldGamepad.buttons]);
+				this._compareAxes([...newGamepad.axes], [...oldGamepad.axes]);
+				this._compareJoysticks([...newGamepad.axes], [...oldGamepad.axes]);
 			}
 			this._setLastValues();
+
+			// Update properties from the native gamepad
+			this.axes = gamepad.axes;
+			this.buttons = gamepad.buttons;
+			this.connected = gamepad.connected;
+			this.id = gamepad.id;
+			this.index = gamepad.index;
+			this.mapping = gamepad.mapping;
+			this.timestamp = gamepad.timestamp;
 		}
 
 		/**
@@ -413,20 +460,26 @@ export const Gamepads = (() => {
 		 */
 		_compareJoysticks(newAxes: number[], oldAxes: number[]): void {
 			this._callbacks.joystickmove.forEach((callbacks, indices) => {
-				const newHorizontal = this._applyJoystickDeadzone(newAxes[indices[0]]);
-				const newVertical = this._applyJoystickDeadzone(newAxes[indices[1]]);
-				const oldHorizontal = this._applyJoystickDeadzone(oldAxes[indices[0]]);
-				const oldVertical = this._applyJoystickDeadzone(oldAxes[indices[1]]);
-				if (newHorizontal !== oldHorizontal || newVertical !== oldVertical) {
-					const event = new GamepadJoystickEvent(
-						this,
-						"joystickmove",
-						indices[0],
-						indices[1],
-						newHorizontal,
-						newVertical,
+				if (Array.isArray(indices)) {
+					const newHorizontal = this._applyJoystickDeadzone(
+						newAxes[indices[0]],
 					);
-					event._dispatch(callbacks);
+					const newVertical = this._applyJoystickDeadzone(newAxes[indices[1]]);
+					const oldHorizontal = this._applyJoystickDeadzone(
+						oldAxes[indices[0]],
+					);
+					const oldVertical = this._applyJoystickDeadzone(oldAxes[indices[1]]);
+					if (newHorizontal !== oldHorizontal || newVertical !== oldVertical) {
+						const event = new GamepadJoystickEvent(
+							this,
+							"joystickmove",
+							indices[0],
+							indices[1],
+							newHorizontal,
+							newVertical,
+						);
+						event._dispatch(callbacks);
+					}
 				}
 			});
 		}
@@ -501,24 +554,27 @@ export const Gamepads = (() => {
 		 * @param oldValues - Previous button values
 		 * @private
 		 */
-		_compareButtons(newValues: any[], oldValues: any[]): void {
+		_compareButtons(
+			newValues: GamepadButton[],
+			oldValues: GamepadButton[],
+		): void {
 			this._checkButtons(
 				"buttonpress",
 				newValues,
 				oldValues,
-				(nv: any, ov: any) => nv.pressed && !ov.pressed,
+				(nv: GamepadButton, ov: GamepadButton) => nv.pressed && !ov.pressed,
 			);
 			this._checkButtons(
 				"buttonrelease",
 				newValues,
 				oldValues,
-				(nv: any, ov: any) => !nv.pressed && ov.pressed,
+				(nv: GamepadButton, ov: GamepadButton) => !nv.pressed && ov.pressed,
 			);
 			this._checkButtons(
 				"buttonvaluechange",
 				newValues,
 				oldValues,
-				(nv: any, ov: any) => nv.value !== ov.value,
+				(nv: GamepadButton, ov: GamepadButton) => nv.value !== ov.value,
 			);
 		}
 
@@ -533,9 +589,9 @@ export const Gamepads = (() => {
 		 */
 		_checkButtons(
 			eventType: string,
-			newValues: any[],
-			oldValues: any[],
-			predicate: (nv: any, ov: any) => boolean,
+			newValues: GamepadButton[],
+			oldValues: GamepadButton[],
+			predicate: (nv: GamepadButton, ov: GamepadButton) => boolean,
 		): void {
 			const callbackMap = this._callbacks[eventType];
 			for (let i = 0; i < newValues.length; i++) {
@@ -559,14 +615,32 @@ export const Gamepads = (() => {
 		 * @param index - The button/axis index
 		 * @private
 		 */
-		_dispatchEvent(event: any, callbackMap: any, index: any): void {
+		_dispatchEvent(
+			event: unknown,
+			callbackMap: Map<number | number[], ((event: unknown) => void)[]>,
+			index: number | number[],
+		): void {
 			if (callbackMap.has(index)) {
 				// specific listeners
-				event._dispatch(callbackMap.get(index));
+				const listeners = callbackMap.get(index);
+				if (listeners) {
+					(
+						event as {
+							_dispatch: (listeners: ((event: unknown) => void)[]) => void;
+						}
+					)._dispatch(listeners);
+				}
 			}
 			if (callbackMap.has(-1)) {
 				// non-specific listeners
-				event._dispatch(callbackMap.get(-1));
+				const listeners = callbackMap.get(-1);
+				if (listeners) {
+					(
+						event as {
+							_dispatch: (listeners: ((event: unknown) => void)[]) => void;
+						}
+					)._dispatch(listeners);
+				}
 			}
 		}
 
@@ -605,14 +679,17 @@ export const Gamepads = (() => {
 		 */
 		addEventListener(
 			type: string,
-			listener: Function,
+			listener: (event: unknown) => void,
 			index: number | number[] = -1,
 		): void {
 			this._checkJoystickEvent(type, index);
 			if (!this._callbacks[type].has(index)) {
 				this._callbacks[type].set(index, []);
 			}
-			this._callbacks[type].get(index).push(listener);
+			const listeners = this._callbacks[type].get(index);
+			if (listeners) {
+				listeners.push(listener);
+			}
 		}
 
 		/**
@@ -624,14 +701,17 @@ export const Gamepads = (() => {
 		 */
 		removeEventListener(
 			type: string,
-			listener: Function,
+			listener: (event: unknown) => void,
 			index: number | number[] = -1,
 		): void {
 			this._checkJoystickEvent(type, index);
-			const filtered = this._callbacks[type]
-				.get(index)
-				.filter((callback: Function) => callback !== listener);
-			this._callbacks[type].set(index, filtered);
+			const listeners = this._callbacks[type].get(index);
+			if (listeners) {
+				const filtered = listeners.filter(
+					(callback: (event: unknown) => void) => callback !== listener,
+				);
+				this._callbacks[type].set(index, filtered);
+			}
 		}
 
 		/**
@@ -665,7 +745,7 @@ export const Gamepads = (() => {
 		 */
 		addJoystickEventListener(
 			type: string,
-			listener: Function,
+			listener: (event: unknown) => void,
 			horizontalIndex: number,
 			verticalIndex: number,
 		): void {
@@ -682,7 +762,7 @@ export const Gamepads = (() => {
 		 */
 		removeJoystickEventListener(
 			type: string,
-			listener: Function,
+			listener: (event: unknown) => void,
 			horizontalIndex: number,
 			verticalIndex: number,
 		): void {
@@ -701,7 +781,7 @@ export const Gamepads = (() => {
 	 */
 	class _GamepadEvent {
 		/** The gamepad for which the event occurred */
-		gamepad: any;
+		gamepad: GamepadState;
 		/** The event type */
 		type: string;
 		/** Internal flag indicating if the event has been consumed */
@@ -713,7 +793,7 @@ export const Gamepads = (() => {
 		 * @param gamepad - The gamepad instance
 		 * @param type - The event type
 		 */
-		constructor(gamepad: any, type: string) {
+		constructor(gamepad: GamepadState, type: string) {
 			this.gamepad = gamepad;
 			this.type = type.toLowerCase();
 			this._consumed = false;
@@ -741,7 +821,7 @@ export const Gamepads = (() => {
 		 * @param listeners - Array of listener functions
 		 * @private
 		 */
-		_dispatch(listeners: Function[]): void {
+		_dispatch(listeners: ((event: unknown) => void)[]): void {
 			for (let i = 0; i < listeners.length && !this.isConsumed(); i++) {
 				listeners[i](this);
 			}
@@ -770,7 +850,12 @@ export const Gamepads = (() => {
 		 * @param index - The button or axis index
 		 * @param value - The new value
 		 */
-		constructor(gamepad: any, type: string, index: number, value: number) {
+		constructor(
+			gamepad: GamepadState,
+			type: string,
+			index: number,
+			value: number,
+		) {
 			super(gamepad, type);
 			this.index = index;
 			this.value = value;
@@ -805,7 +890,7 @@ export const Gamepads = (() => {
 		 * @param vValue - Value of the vertical axis
 		 */
 		constructor(
-			gamepad: any,
+			gamepad: GamepadState,
 			type: string,
 			hIndex: number,
 			vIndex: number,

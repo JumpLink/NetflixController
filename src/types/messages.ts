@@ -1,5 +1,3 @@
-/** biome-ignore-all lint/suspicious/noExplicitAny: Message interfaces use dynamic properties for flexible extension messaging requiring any types for runtime message structures. */
-
 // Browser extension message types
 
 export interface LocationChangedMessage {
@@ -21,5 +19,5 @@ export type ContentScriptMessage =
 	| EnableGamepadInputMessage;
 
 export interface RuntimeMessage {
-	[key: string]: any;
+	[key: string]: unknown;
 }
