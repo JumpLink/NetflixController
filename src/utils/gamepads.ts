@@ -1,5 +1,5 @@
 /**
- * Source: https://github.com/FThompson/ChromeLiveStorage
+ * Source: https://github.com/FThompson/Gamepads.js
  *
  * MIT License
  *

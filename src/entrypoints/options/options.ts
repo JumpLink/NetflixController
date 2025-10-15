@@ -1,8 +1,8 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: Options page works with dynamic DOM elements and storage APIs requiring flexible typing for option controls, change events, and DOM element methods. */
-import LiveStorage from "../../utils/live-storage.ts";
+import * as S from "../../utils/storage-items";
 import { OPTIONS } from "./settings.ts";
 
-const storage = LiveStorage;
+// Initialize values and change listeners
 const manifest = browser.runtime.getManifest();
 document.querySelectorAll(".extension-name").forEach((elem: Element) => {
 	(elem as HTMLElement).textContent = manifest.name;
@@ -16,11 +16,37 @@ const dependencies: Record<string, Record<string, any>> = {};
 
 for (const option of OPTIONS) {
 	insertOptionControl(option);
-	storage.addListener(option.name, (change: any) => {
-		updateDisplayedSetting(option.name, change.value);
-	});
 }
-storage.load();
+
+// Initial population from storage
+Promise.all([
+	S.showActionHints
+		.get()
+		.then((v) => updateDisplayedSetting("showActionHints", v ?? true)),
+	S.buttonImageMapping
+		.get()
+		.then((v) => updateDisplayedSetting("buttonImageMapping", v ?? "Xbox One")),
+	S.showConnectionHint
+		.get()
+		.then((v) => updateDisplayedSetting("showConnectionHint", v ?? true)),
+	S.showCompatibilityWarning
+		.get()
+		.then((v) => updateDisplayedSetting("showCompatibilityWarning", v ?? true)),
+]).catch((err) => console.error("Failed to load options from storage", err));
+
+// Wire change listeners
+S.showActionHints.onChanged((v) =>
+	updateDisplayedSetting("showActionHints", v),
+);
+S.buttonImageMapping.onChanged((v) =>
+	updateDisplayedSetting("buttonImageMapping", v),
+);
+S.showConnectionHint.onChanged((v) =>
+	updateDisplayedSetting("showConnectionHint", v),
+);
+S.showCompatibilityWarning.onChanged((v) =>
+	updateDisplayedSetting("showCompatibilityWarning", v),
+);
 
 function updateDisplayedSetting(key: string, value: any): void {
 	const element = document.getElementById(key);
@@ -111,8 +137,13 @@ function createCheckbox(option: any): HTMLInputElement {
 	checkbox.id = option.name;
 	checkbox.checked = option.default;
 	checkbox.addEventListener("change", () => {
-		(storage as any)[option.storageArea][option.name] = checkbox.checked;
-		// chrome.storage[option.storageArea].set({ [option.name]: checkbox.checked });
+		if (option.name === "showActionHints") {
+			S.showActionHints.set(checkbox.checked);
+		} else if (option.name === "showConnectionHint") {
+			S.showConnectionHint.set(checkbox.checked);
+		} else if (option.name === "showCompatibilityWarning") {
+			S.showCompatibilityWarning.set(checkbox.checked);
+		}
 	});
 	(checkbox as any).getValue = () => checkbox.checked;
 	(checkbox as any).setValue = (value: boolean) => {
@@ -134,8 +165,9 @@ function createCombobox(option: any): HTMLSelectElement {
 		combobox.append(boxOption);
 	}
 	combobox.addEventListener("change", () => {
-		(storage as any)[option.storageArea][option.name] = combobox.value;
-		// chrome.storage[option.storageArea].set({ [option.name]: combobox.value });
+		if (option.name === "buttonImageMapping") {
+			S.buttonImageMapping.set(combobox.value);
+		}
 	});
 	(combobox as any).getValue = () => combobox.value;
 	(combobox as any).setValue = (value: string) => {

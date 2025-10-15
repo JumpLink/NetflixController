@@ -1,10 +1,9 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: Popup script handles dynamic gamepad events and interactions requiring flexible typing for event handlers and button state tracking. */
-import type { LiveStorageInstance } from "../../types/storage";
 import { gamepadMappings } from "../../utils/gamepad-icons.ts";
 import { gamepads, StandardMapping } from "../../utils/gamepads.ts";
-import LiveStorage from "../../utils/live-storage.ts";
+import * as S from "../../utils/storage-items";
 
-const storage: LiveStorageInstance = LiveStorage;
+let currentMapping = "Xbox One";
 const style = window.getComputedStyle(document.body);
 const CONTAINER_SIZE = parseFloat(
 	style.getPropertyValue("--joystick-container-size"),
@@ -26,16 +25,29 @@ browser.tabs.query({ currentWindow: true, active: true }, (tabs) => {
 	}
 });
 
-storage.addListener("buttonImageMapping", () => {
-	// TODO link mapping to controller id maybe?
+// Initialize mapping and wire listener
+S.buttonImageMapping
+	.get()
+	.then((v) => {
+		currentMapping = v ?? "Xbox One";
+		const mappingElement = document.getElementById(
+			"gamepad-mapping",
+		) as HTMLSelectElement;
+		if (mappingElement) {
+			mappingElement.value = currentMapping;
+		}
+	})
+	.catch((err) => console.error("Failed to read buttonImageMapping", err));
+
+S.buttonImageMapping.onChanged((v) => {
+	currentMapping = v;
 	const mappingElement = document.getElementById(
 		"gamepad-mapping",
 	) as HTMLSelectElement;
 	if (mappingElement) {
-		mappingElement.value = storage.sync.buttonImageMapping;
+		mappingElement.value = currentMapping;
 	}
 });
-storage.load();
 
 gamepads.addEventListener("connect", (e: any) => {
 	console.log("Gamepad connected:");
@@ -78,7 +90,7 @@ const mappingDropdown = document.getElementById(
 ) as HTMLSelectElement;
 if (mappingDropdown) {
 	mappingDropdown.addEventListener("change", () => {
-		storage.sync.buttonImageMapping = mappingDropdown.value;
+		S.buttonImageMapping.set(mappingDropdown.value);
 	});
 }
 
@@ -96,10 +108,7 @@ gamepads.start();
 
 function showPressedButton(index: number) {
 	if (!pressedButtons[index]) {
-		const button = gamepadMappings.getButton(
-			storage.sync.buttonImageMapping,
-			index,
-		);
+		const button = gamepadMappings.getButton(currentMapping, index);
 		if (button) {
 			const img = document.createElement("img");
 			img.classList.add("gamepad-button");

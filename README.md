@@ -69,7 +69,7 @@ Add Netflix Controller to your browser [here](https://chrome.google.com/webstore
 ## Libraries and Materials Used
 * [pseudo:styler](https://github.com/TSedlar/pseudo-styler) - A module that allows for forcing an element to be styled with a pseudo-class.
 * [Gamepads.js](https://github.com/FThompson/Gamepads.js) - A module for tracking Gamepads and events pertaining to their usage.
-* [Chrome Live Storage](https://github.com/FThompson/ChromeLiveStorage) - A module that provides `chrome.storage` data as native JavaScript objects that automatically synchronize between all extension views (background, content scripts, popups, options, etc.).
+* [webext-storage](https://github.com/fregante/webext-storage) - A typed, Promise-based storage API for WebExtensions with easy change listeners.
 * Xbox controller image courtesy of http://gamepadviewer.com/
 * Project icons courtesy of https://material.io/icons/ and https://iconfu.com.
 * Many thanks to [Tyler Sedlar](https://github.com/TSedlar) for creating pseudo:styler and for letting me bounce ideas off of him throughout development of this project.

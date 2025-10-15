@@ -21,25 +21,14 @@
 	"type": "module",
 	"main": "dist/app/content/content.js",
 	"scripts": {
-		"dev": "wxt",
-		"dev:firefox": "wxt -b firefox",
-		"build": "wxt build",
-		"build:firefox": "wxt build -b firefox",
-		"zip": "wxt zip",
-		"zip:firefox": "wxt zip -b firefox",
+		"dev": "wxt --mv3",
+		"dev:firefox": "wxt -b firefox --mv3",
+		"build": "wxt build --mv3",
+		"build:firefox": "wxt build -b firefox --mv3",
+		"zip": "wxt zip --mv3",
+		"zip:firefox": "wxt zip -b firefox --mv3",
 		"postinstall": "wxt prepare",
 		"check": "tsc --noEmit && biome check",
 		"format": "biome check --write --unsafe"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "2.2.6",
-		"@types/chrome": "^0.1.24",
-		"typescript": "^5.9.3",
-		"wxt": "^0.20.11"
-	},
-	"pnpm": {
-		"overrides": {
-			"@wxt-dev/browser": "^0.1.4"
-		}
 	}
 }

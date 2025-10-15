@@ -11,6 +11,12 @@ export default defineConfig({
 			"Control Netflix in your browser with a gamepad or controller.",
 		permissions: ["storage", "tabs", "scripting"],
 		host_permissions: ["*://*.netflix.com/*"],
+		browser_specific_settings: {
+			gecko: {
+				// Set a stable ID so Firefox enables storage in dev builds
+				id: "netflix-controller@jumplink.eu",
+			},
+		},
 		icons: {
 			16: "/assets/icon16.png",
 			32: "/assets/icon32.png",
@@ -33,6 +39,7 @@ export default defineConfig({
 				manifest.content_scripts[0].exclude_matches = [
 					"*://help.netflix.com/*",
 				];
+				manifest.content_scripts[0].all_frames = true;
 			}
 		},
 	},

@@ -3,10 +3,9 @@ import type { NavigationAction } from "../../types/components";
 import type { GamepadState } from "../../types/gamepad";
 import type { ContentScriptMessage } from "../../types/messages";
 import type { Settings } from "../../types/settings";
-import type { LiveStorageInstance } from "../../types/storage";
 import { gamepadMappings } from "../../utils/gamepad-icons.ts";
 import { gamepads, StandardMapping } from "../../utils/gamepads.ts";
-import LiveStorage from "../../utils/live-storage.ts";
+import * as S from "../../utils/storage-items";
 
 // Import CSS - WXT will automatically add this to the manifest
 import "../../../public/assets/styles/content.css";
@@ -33,7 +32,6 @@ import { VirtualKeyboard as VirtualKeyboardImpl } from "./ui/virtual-keyboard.js
 export default defineContentScript({
 	matches: ["*://*.netflix.com/*"],
 	main() {
-		const storage: LiveStorageInstance = LiveStorage;
 		const ERROR_ALERT_DURATION = 10000;
 		const NETFLIX_RED = "rgba(229, 9, 20)";
 
@@ -49,7 +47,13 @@ export default defineContentScript({
 		let keyboard: VirtualKeyboardImpl | null = null;
 		const handlerHistory: string[] = [];
 		let currentHandler: NavigatablePage | null = null;
-		const actionHandler = new ActionHandler(storage as unknown as Settings);
+		const settings: Settings = {
+			showActionHints: true,
+			buttonImageMapping: "Xbox One",
+			showConnectionHint: true,
+			showCompatibilityWarning: true,
+		};
+		const actionHandler = new ActionHandler(settings);
 		const connectionHintBar = new ConnectionHintBarImpl();
 		const compatibilityWarning = new CompatibilityWarningBarImpl();
 		const errorBar = new ErrorBarImpl();
@@ -75,16 +79,44 @@ export default defineContentScript({
 			onPress: goBack,
 		};
 
-		storage.addListener("showActionHints", showActionHints);
-		storage.addListener("buttonImageMapping", () =>
-			actionHandler.updateHints(),
-		);
-		storage.addListener("showConnectionHint", showConnectionHint);
-		storage.addListener("showCompatibilityWarning", updateCompatibility);
-		storage.load().then(() => {
-			// Initialize UI elements after storage is loaded
-			showConnectionHint();
+		// Initialize settings from storage and wire change listeners
+		Promise.all([
+			S.showActionHints.get().then((v) => {
+				settings.showActionHints = v ?? true;
+			}),
+			S.buttonImageMapping.get().then((v) => {
+				settings.buttonImageMapping = v ?? "Xbox One";
+			}),
+			S.showConnectionHint.get().then((v) => {
+				settings.showConnectionHint = v ?? true;
+			}),
+			S.showCompatibilityWarning.get().then((v) => {
+				settings.showCompatibilityWarning = v ?? true;
+			}),
+		])
+			.then(() => {
+				showConnectionHint();
+				showActionHints();
+				updateCompatibility();
+			})
+			.catch((err) => {
+				console.error("Failed to initialize settings", err);
+			});
+
+		S.showActionHints.onChanged((val) => {
+			settings.showActionHints = val;
 			showActionHints();
+		});
+		S.buttonImageMapping.onChanged((val) => {
+			settings.buttonImageMapping = val;
+			actionHandler.updateHints();
+		});
+		S.showConnectionHint.onChanged((val) => {
+			settings.showConnectionHint = val;
+			showConnectionHint();
+		});
+		S.showCompatibilityWarning.onChanged((val) => {
+			settings.showCompatibilityWarning = val;
 			updateCompatibility();
 		});
 
@@ -173,7 +205,7 @@ export default defineContentScript({
 		}
 
 		function showActionHints() {
-			if (numGamepads > 0 && (storage.sync.showActionHints ?? true)) {
+			if (numGamepads > 0 && (settings.showActionHints ?? true)) {
 				actionHandler.showHints();
 			} else {
 				actionHandler.hideHints();
@@ -181,7 +213,7 @@ export default defineContentScript({
 		}
 
 		function showConnectionHint() {
-			if (numGamepads === 0 && (storage.local.showConnectionHint ?? true)) {
+			if (numGamepads === 0 && (settings.showConnectionHint ?? true)) {
 				connectionHintBar.add();
 			} else {
 				connectionHintBar.remove();
@@ -190,7 +222,7 @@ export default defineContentScript({
 
 		function updateCompatibility() {
 			if (
-				(storage.local.showCompatibilityWarning ?? true) &&
+				(settings.showCompatibilityWarning ?? true) &&
 				numGamepads > 0 &&
 				!isStandardGamepadConnected()
 			) {
@@ -201,7 +233,10 @@ export default defineContentScript({
 		}
 
 		function showError(error: Error, timeout: number = -1) {
-			console.error(error);
+			console.error("Netflix Controller Error:", error);
+			console.error("Error message:", error.message);
+			console.error("Error stack:", error.stack);
+			console.error("Error name:", error.name);
 			errorBar.setError(error.message, timeout);
 			errorBar.add();
 		}
@@ -225,6 +260,39 @@ export default defineContentScript({
 		}
 
 		log("Listening for gamepad connections.");
+		// Native gamepad events for diagnostics
+		window.addEventListener("gamepadconnected", (e: any) => {
+			console.log("Native gamepadconnected:", e.gamepad?.id, e);
+		});
+		window.addEventListener("gamepaddisconnected", (e: any) => {
+			console.log("Native gamepaddisconnected:", e.gamepad?.id, e);
+		});
+
+		// Some browsers require a user gesture before Gamepad API starts reporting.
+		function startOnGestureOnce() {
+			try {
+				gamepads.start();
+				debugDumpGamepads("gesture-start");
+			} catch (e) {
+				console.warn("Failed to start gamepads on gesture:", e);
+			}
+		}
+		document.addEventListener("pointerdown", startOnGestureOnce, {
+			once: true,
+		});
+		document.addEventListener("keydown", startOnGestureOnce, { once: true });
+
+		// Temporary debug dump of navigator.getGamepads to verify visibility
+		function debugDumpGamepads(tag: string) {
+			try {
+				const gps = (navigator as any).getGamepads?.() || [];
+				console.log(`Gamepads[${tag}] count=`, gps.length, gps);
+			} catch (e) {
+				console.warn("navigator.getGamepads failed:", e);
+			}
+		}
+		setTimeout(() => debugDumpGamepads("t+0.5s"), 500);
+		setTimeout(() => debugDumpGamepads("t+2s"), 2000);
 		gamepads.addEventListener("connect", (e: any) => {
 			if (!hasConnectedGamepad) {
 				// first connection, run current page handler manually
@@ -424,6 +492,21 @@ export default defineContentScript({
 			});
 			observer.observe(root, { subtree: true, childList: true });
 		}
+
+		// Global error handler for uncaught errors
+		window.addEventListener("error", (event) => {
+			console.error("Global uncaught error:", event.error);
+			console.error("Error message:", event.error?.message);
+			console.error("Error stack:", event.error?.stack);
+			console.error("Error filename:", event.filename);
+			console.error("Error lineno:", event.lineno);
+			console.error("Error colno:", event.colno);
+		});
+
+		window.addEventListener("unhandledrejection", (event) => {
+			console.error("Unhandled promise rejection:", event.reason);
+			console.error("Promise rejection stack:", event.reason?.stack);
+		});
 
 		// Make functions globally available for other modules
 		// TODO: Cleaner exportable solution?

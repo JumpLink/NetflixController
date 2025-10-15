@@ -3,18 +3,15 @@ import type {
 	RuntimeInstalledDetails,
 	TabChangeInfo,
 } from "../../types/browser";
-import type { LiveStorageInstance } from "../../types/storage";
-import LiveStorage from "../../utils/live-storage.ts";
-import { OPTIONS } from "../options/settings.js";
+import * as S from "../../utils/storage-items";
+// import { OPTIONS } from "../options/settings.js";
 
 export default defineBackground(() => {
-	const storage: LiveStorageInstance = LiveStorage;
-
+	console.log("[background] service worker started (MV3)");
 	// Initialize extension
 	browser.runtime.onInstalled.addListener(
 		(details: RuntimeInstalledDetails) => {
 			if (details.reason === "install") {
-				storage.load().then(() => setDefaultSettings());
 				setDefaultSettings();
 			}
 			// In MV3, we don't need declarativeContent anymore
@@ -23,14 +20,24 @@ export default defineBackground(() => {
 	);
 
 	browser.runtime.onStartup.addListener(() => {
-		storage.load();
+		console.log("[background] onStartup");
 	});
 
 	// Set default settings
 	function setDefaultSettings() {
-		for (const option of OPTIONS) {
-			storage[option.storageArea][option.name] = option.default;
-		}
+		// Only set defaults if not set yet
+		S.showActionHints.has().then((has) => {
+			if (!has) S.showActionHints.set(true);
+		});
+		S.buttonImageMapping.has().then((has) => {
+			if (!has) S.buttonImageMapping.set("Xbox One");
+		});
+		S.showConnectionHint.has().then((has) => {
+			if (!has) S.showConnectionHint.set(true);
+		});
+		S.showCompatibilityWarning.has().then((has) => {
+			if (!has) S.showCompatibilityWarning.set(true);
+		});
 	}
 
 	// Inform the content script of any changes to the Netflix's URL path
