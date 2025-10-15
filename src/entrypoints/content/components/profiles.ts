@@ -1,18 +1,26 @@
-import { StaticNavigatable } from './static-navigatable.ts';
+import type {
+	InteractiveComponent,
+	NavigatableComponent,
+	StyleableComponent,
+} from "../../../types/components.ts";
+import type PseudoStyler from "../../../utils/pseudostyler.ts";
+import { StaticNavigatable } from "./static-navigatable.ts";
 
 declare function runHandler(path: string, forceLoad: boolean): void;
 
 export class Profiles extends StaticNavigatable {
-    getComponents(): any[] {
-        return Array.from(document.querySelectorAll('.choose-profile a.profile-link'));
-    }
+	getComponents(): NavigatableComponent[] {
+		return Array.from(
+			document.querySelectorAll(".choose-profile a.profile-link"),
+		);
+	}
 
-    style(component: any, selected: boolean): void {
-        (this.styler as any).toggleStyle(component, ':hover', selected);
-    }
+	style(component: StyleableComponent, selected: boolean): void {
+		(this.styler as PseudoStyler).toggleStyle(component, ":hover", selected);
+	}
 
-    interact(component: any): void {
-        super.interact(component);
-        runHandler(window.location.pathname, true);
-    }
+	interact(component: InteractiveComponent): void {
+		super.interact(component);
+		runHandler(window.location.pathname, true);
+	}
 }

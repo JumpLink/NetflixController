@@ -1,74 +1,74 @@
 :root {
-    --joystick-size: 6px;
-    --joystick-container-size: 100px;
-    --options-button-height: 1.5rem;
+	--joystick-size: 6px;
+	--joystick-container-size: 100px;
+	--options-button-height: 1.5rem;
 }
 
 body {
-    width: 250px;
-    height: 275px;
-    font-family: 'Helvetica Neue', Helvetica, Arial, Helvetica, sans-serif;
+	width: 250px;
+	height: 275px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .joystick {
-    display: inline-block;
-    width: var(--joystick-container-size);
-    height: var(--joystick-container-size);
-    border: 1px solid lightgrey;
-    border-radius: var(--joystick-container-size);
+	display: inline-block;
+	width: var(--joystick-container-size);
+	height: var(--joystick-container-size);
+	border: 1px solid lightgrey;
+	border-radius: var(--joystick-container-size);
 }
 
 .joystick-dot {
-    width: var(--joystick-size);
-    height: var(--joystick-size);
-    background-color: rgba(229, 9, 20);
-    border: 1px solid black;
-    border-radius: var(--joystick-size);
-    position: relative;
+	width: var(--joystick-size);
+	height: var(--joystick-size);
+	background-color: rgba(229, 9, 20);
+	border: 1px solid black;
+	border-radius: var(--joystick-size);
+	position: relative;
 }
 
 .crosshair {
-    width: calc(var(--joystick-container-size) + 2px);
-    height: calc(var(--joystick-container-size) + 2px);
-    margin-top: -9px;
-    margin-left: -1px;
+	width: calc(var(--joystick-container-size) + 2px);
+	height: calc(var(--joystick-container-size) + 2px);
+	margin-top: -9px;
+	margin-left: -1px;
 }
 
 .crosshair .horizontal {
-    border-top: 1px solid lightgray;
-    margin-top: calc((var(--joystick-container-size) + 2px) / 2);
+	border-top: 1px solid lightgray;
+	margin-top: calc((var(--joystick-container-size) + 2px) / 2);
 }
 
 .crosshair .vertical {
-    width: 1px;
-    height: var(--joystick-container-size);
-    border-left: 1px solid lightgray;
-    margin-left: calc((var(--joystick-container-size) + 2px) / 2);
-    margin-top: calc((var(--joystick-container-size) + 2px) / -2);
+	width: 1px;
+	height: var(--joystick-container-size);
+	border-left: 1px solid lightgray;
+	margin-left: calc((var(--joystick-container-size) + 2px) / 2);
+	margin-top: calc((var(--joystick-container-size) + 2px) / -2);
 }
 
 .gamepad-button {
-    width: 40px;
-    height: 40px;
+	width: 40px;
+	height: 40px;
 }
 
 #no-standard-gamepad {
-    color: red;
-    display: none;
+	color: red;
+	display: none;
 }
 
 #gamepad-test {
-    margin-bottom: calc(1rem + var(--options-button-height));
+	margin-bottom: calc(1rem + var(--options-button-height));
 }
 
 footer {
-    position: absolute;
-    bottom: 0;
-    height: var(--options-button-height);
-    width: 100%;
-    margin: 0.5rem 0;
+	position: absolute;
+	bottom: 0;
+	height: var(--options-button-height);
+	width: 100%;
+	margin: 0.5rem 0;
 }
 
 #options {
-    height: var(--options-button-height);
+	height: var(--options-button-height);
 }

@@ -1,7 +1,9 @@
 // Main types export file
-export * from './gamepad';
-export * from './storage';
-export * from './handlers';
-export * from './messages';
-export * from './settings';
-export * from './browser';
+
+export * from "./browser.ts";
+export * from "./components";
+export * from "./gamepad.ts";
+export * from "./handlers.ts";
+export * from "./messages.ts";
+export * from "./settings.ts";
+export * from "./storage.ts";
