@@ -1,18 +1,28 @@
-import { TitlePanel } from './title-panel.js';
+import { TitlePanel } from './title-panel.ts';
 
 export class Jawbone extends TitlePanel {
-    constructor(row, jawbone, slider) {
+    jawbone: any;
+    inline: boolean;
+    slider: any;
+    closed: boolean;
+    replacedEarlierJawbone: boolean;
+
+    constructor(row: number, jawbone?: any, slider?: any) {
         super(row);
         this.jawbone = jawbone;
         this.inline = jawbone !== undefined;
         this.slider = slider;
+        this.closed = false;
+        this.replacedEarlierJawbone = false;
+
         if (this.slider) {
             this.slider.jawboneOpen = true;
         }
-        this.closed = false;
+
         if (this.inline) {
             this.replaceInlineJawbone();
         }
+
         // TODO implement support for Jawbone menu navigation
         // this.initTabs();
         // this.nextTabAction = {
@@ -27,7 +37,7 @@ export class Jawbone extends TitlePanel {
         // }
     }
 
-    static getJawbone(row, slider) {
+    static getJawbone(row: number, slider?: any): Jawbone | null {
         let rowNode = document.getElementById(`row-${row}`);
         if (rowNode) {
             let jawbone = rowNode.querySelector('.jawBoneContainer');

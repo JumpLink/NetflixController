@@ -1,32 +1,45 @@
-import { Navigatable } from './navigatable.js';
+import { Navigatable } from './navigatable.ts';
+import { StandardMapping } from '../../../utils/gamepads.ts';
 
 export class Slider extends Navigatable {
+    row: number;
+    rowNode: Element;
+    canShiftLeft: boolean;
+    locked: boolean;
+    jawboneOpen: boolean;
+    jawboneAction: any;
+    position: number;
+    sliderItem: Element | null;
+
     /**
      * Creates the Slider at the given row and selects the given position in it.
      */
-    constructor(row, rowNode, position) {
+    constructor(row: number, rowNode: Element, position?: number) {
         super();
         this.row = row;
         this.rowNode = rowNode;
-        if (position !== undefined) {
-            this.selectPosition(position);
-        }
         this.canShiftLeft = false;
         this.locked = false;
         this.jawboneOpen = false;
+        this.position = 0;
+        this.sliderItem = null;
         this.jawboneAction = {
             label: 'Expand',
             index: StandardMapping.Button.BUTTON_LEFT,
             onPress: () => this.openJawbone()
         };
+
+        if (position !== undefined) {
+            this.selectPosition(position);
+        }
     }
 
     /**
      * Returns the slider at the given row if it exists.
      * Sets that slider to the given position or the right-most position if not possible.
      */
-    static getSlider(row, position) {
-        let rowNode = document.querySelector(`#row-${row}`);
+    static getSlider(row: number, position?: number): Slider | null {
+        const rowNode = document.querySelector(`#row-${row}`);
         if (rowNode) {
             return new Slider(row, rowNode, position);
         }
@@ -36,21 +49,21 @@ export class Slider extends Navigatable {
     /**
      * Selects the previous slider item.
      */
-    left() {
+    left(): void {
         this.select(false);
     }
 
     /**
      * Selects the next slider item.
      */
-    right() {
+    right(): void {
         this.select(true);
     }
 
     /**
      * Selects either this slider's first item or the item in the given position.
      */
-    enter(params) {
+    enter(params?: any): void {
         if (params.jawboneClosed) {
             this.jawboneOpen = false;
         }
