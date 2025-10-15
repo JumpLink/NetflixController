@@ -1,6 +1,10 @@
 import { Navigatable } from './navigatable.ts';
 import { StandardMapping } from '../../../utils/gamepads.ts';
 
+declare let actionHandler: any;
+declare let currentHandler: any;
+declare function getTransparentNetflixRed(opacity: number): string;
+
 export class Slider extends Navigatable {
     row: number;
     rowNode: Element;
@@ -91,7 +95,7 @@ export class Slider extends Navigatable {
     /**
      * Unselects this slider and returns its position.
      */
-    exit() {
+    exit(): any {
         this.unselect();
         let position = this.position;
         if (this.canShiftLeft) {
@@ -100,7 +104,7 @@ export class Slider extends Navigatable {
         return {position: position};
     }
 
-    getActions() {
+    getActions(): any[] {
         let actions = [{
             label: 'Play',
             index: StandardMapping.Button.BUTTON_BOTTOM,
@@ -112,36 +116,38 @@ export class Slider extends Navigatable {
         return actions;
     }
 
-    openJawbone() {
+    openJawbone(): void {
         if (!this.locked) {
             if (this.clickHitzone('.bob-jaw-hitzone')) {
                 this.locked = true;
                 actionHandler.removeAction(this.jawboneAction);
                 let jawboneContainer = this.rowNode.querySelector('.jawBoneContainer');
-                // wait for jawbone open transition to finish before giving jawbone focus
-                let transition = window.getComputedStyle(jawboneContainer).transition;
-                let pattern = new RegExp(/height (\d+(\.\d+)?)s/g);
-                let matches = pattern.exec(transition);
-                let heightDuration = matches.length > 0 ? Number(matches[1]) * 1000 : 1000;
-                setTimeout(() => {
-                    currentHandler.setNavigatable(currentHandler.position + 1);
-                    this.jawboneOpen = true;
-                    this.locked = false;
-                }, heightDuration + 300); // extra 300ms for smoothness
+                if (jawboneContainer) {
+                    // wait for jawbone open transition to finish before giving jawbone focus
+                    let transition = window.getComputedStyle(jawboneContainer).transition;
+                    let pattern = new RegExp(/height (\d+(\.\d+)?)s/g);
+                    let matches = pattern.exec(transition);
+                    let heightDuration = matches && matches.length > 0 ? Number(matches[1]) * 1000 : 1000;
+                    setTimeout(() => {
+                        currentHandler.setNavigatable(currentHandler.position + 1);
+                        this.jawboneOpen = true;
+                        this.locked = false;
+                    }, heightDuration + 300); // extra 300ms for smoothness
+                }
             }
         }
     }
 
-    clickHitzone(selector) {
+    clickHitzone(selector: string): boolean {
         let hitzone = document.querySelector(selector);
         if (hitzone) {
-            hitzone.click();
+            (hitzone as HTMLElement).click();
             return true;
         }
         return false;
     }
 
-    getBoxArtContainer(sliderItem) {
+    getBoxArtContainer(sliderItem: any): Element | null {
         let boxarts = sliderItem.querySelectorAll('div.boxart-container');
         // large title cards still have the small element; the last element is the larger one
         return boxarts[boxarts.length - 1];
@@ -150,14 +156,17 @@ export class Slider extends Navigatable {
     /**
      * Scrolls the viewport to be centered vertically on this slider.
      */
-    scrollIntoView() {
-        Navigatable.scrollIntoView(this.getBoxArtContainer(this.sliderItem));
+    scrollIntoView(): void {
+        const boxart = this.getBoxArtContainer(this.sliderItem);
+        if (boxart) {
+            Navigatable.scrollIntoView(boxart);
+        }
     }
 
     /**
      * Checks if this slider has the given position.
      */
-    hasPosition(position) {
+    hasPosition(position: number): boolean {
         return this.rowNode.querySelector(`.slider-item-${position}`) !== null;
     }
 
@@ -165,7 +174,7 @@ export class Slider extends Navigatable {
      * Sends a mouseout event to the current item and a mouseover event to the item at the given position.
      * These events initiate the selection animation from one slider item to the next.
      */
-    selectPosition(position) {
+    selectPosition(position: number): void {
         this.locked = true;
         this.unselect();
         let sliderItem = this.rowNode.querySelector(`.slider-item-${position}`);
@@ -177,35 +186,40 @@ export class Slider extends Navigatable {
         this.sliderItem = sliderItem;
         this.position = position;
         let boxart = this.getBoxArtContainer(this.sliderItem);
-        boxart.style.outline = '3px solid ' + getTransparentNetflixRed(0.7);
+        if (boxart) {
+            (boxart as HTMLElement).style.outline = '3px solid ' + getTransparentNetflixRed(0.7);
+        }
     }
 
     /**
      * Unselects the currently selected item.
      */
-    unselect() {
+    unselect(): void {
         if (this.sliderItem) {
             Navigatable.mouseOut(this.getEventTarget(this.sliderItem));
-            this.getBoxArtContainer(this.sliderItem).style.outline = '0';
+            const boxart = this.getBoxArtContainer(this.sliderItem);
+            if (boxart) {
+                (boxart as HTMLElement).style.outline = '0';
+            }
         }
     }
 
     /**
      * Gets the given slider item's mouse event target.
      */
-    getEventTarget(sliderItem) {
-        return this.getBoxArtContainer(sliderItem).childNodes[0];
+    getEventTarget(sliderItem: any): Element {
+        return this.getBoxArtContainer(sliderItem)!.childNodes[0] as Element;
     }
 
     /**
      * Selects either the next or previous slider element, shifting the slider if necessary.
      */
-    select(next) {
+    select(next: boolean): void {
         if (this.locked) {
-            return false; // another interaction is in progress; do not initiate a new one
+            return; // another interaction is in progress; do not initiate a new one
         }
         let selected = false;
-        let target = next ? this.sliderItem.nextElementSibling : this.sliderItem.previousElementSibling;
+        let target = next ? this.sliderItem?.nextElementSibling : this.sliderItem?.previousElementSibling;
         if (target) {
             let targetSibling = next ? target.nextElementSibling : target.previousElementSibling;
             if (targetSibling) {
@@ -230,7 +244,7 @@ export class Slider extends Navigatable {
             currentHandler.inlineJawbone = null;
             currentHandler.removeNavigatable(currentHandler.position + 1);
         }
-        return selected; // if false, vibrate? cannot move slider
+        // if false, vibrate? cannot move slider
     }
 
     /**
@@ -238,15 +252,15 @@ export class Slider extends Navigatable {
      * If the target is at the beginning of the visible list, then its new position will be visibleCount - 2.
      * If the target is at the end of the visible list, then its new position will be 1.
      */
-    getShiftedPosition(target) {
+    getShiftedPosition(target: any): number {
         let newPosition;
-        let position = target.className[target.className.length - 1];
-        if (position === '0') {
+        let position = parseInt((target as Element).className[(target as Element).className.length - 1]);
+        if (position === 0) {
             let slider = this.rowNode.querySelector('.sliderContent');
             // count slider items ending in a number
-            let visibleCount = Array.from(slider.childNodes).reduce((n, node) => {
-                let lastChar = node.className[node.className.length - 1];
-                return n + (lastChar >= '0' && lastChar <= '9');
+            let visibleCount = Array.from(slider!.childNodes).reduce((n, node) => {
+                let lastChar = (node as Element).className[(node as Element).className.length - 1];
+                return n + (lastChar >= '0' && lastChar <= '9' ? 1 : 0);
             }, 0);
             newPosition = visibleCount - 2;
         } else {
@@ -258,9 +272,11 @@ export class Slider extends Navigatable {
     /**
      * Shifts the slider forwards or backwards by clicking the proper control.
      */
-    shiftSlider(next) {
+    shiftSlider(next: boolean): void {
         let handle = this.rowNode.querySelector('span.handle' + (next ? 'Next' : 'Prev'));
-        handle.click();
+        if (handle) {
+            (handle as HTMLElement).click();
+        }
         this.canShiftLeft = true;
     }
 }

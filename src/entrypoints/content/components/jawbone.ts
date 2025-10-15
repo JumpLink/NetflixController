@@ -1,11 +1,16 @@
 import { TitlePanel } from './title-panel.ts';
 
+declare let currentHandler: any;
+
 export class Jawbone extends TitlePanel {
     jawbone: any;
     inline: boolean;
     slider: any;
     closed: boolean;
     replacedEarlierJawbone: boolean;
+    tabPosition?: number;
+    tabs?: any[];
+    sliderPosition?: number;
 
     constructor(row: number, jawbone?: any, slider?: any) {
         super(row);
@@ -48,30 +53,37 @@ export class Jawbone extends TitlePanel {
         return null;
     }
 
-    initTabs() {
+    initTabs(): void {
         this.tabPosition = -1;
-        this.tabs = this.getPanelComponent().querySelectorAll('.menu > li');
-        for (let i = 0; i < this.tabs.length; i++) {
-            if (this.tabs[i].classList.contains('current')) {
-                this.tabPosition = i;
-                return;
+        const panel = this.getPanelComponent();
+        if (panel) {
+            this.tabs = panel.querySelectorAll('.menu > li');
+            if (this.tabs) {
+                for (let i = 0; i < this.tabs.length; i++) {
+                    if (this.tabs[i].classList.contains('current')) {
+                        this.tabPosition = i;
+                        return;
+                    }
+                }
             }
         }
     }
 
-    replaceInlineJawbone() {
-        if (currentHandler.inlineJawbone) {
+    replaceInlineJawbone(): void {
+        if (currentHandler && currentHandler.inlineJawbone) {
             currentHandler.removeNavigatable(currentHandler.inlineJawbone);
             if (this.row !== currentHandler.inlineJawbone.row) {
-                currentHandler.inlineJawbone.slider.jawboneOpen = false;
+                currentHandler.inlineJawbone.slider!.jawboneOpen = false;
                 // used to update position properly when setting position in SliderBrowse
-                this.replacedEarlierJawbone = this.row > currentHandler.inlineJawbone.row;
+                this.replacedEarlierJawbone = this.row! > currentHandler.inlineJawbone.row!;
             }
         }
-        currentHandler.inlineJawbone = this;
+        if (currentHandler) {
+            currentHandler.inlineJawbone = this;
+        }
     }
 
-    getActions() {
+    getActions(): any[] {
         let actions = super.getActions();
         if (this.inline) {
             actions.push({
@@ -89,7 +101,7 @@ export class Jawbone extends TitlePanel {
         return actions;
     }
 
-    enter(params) {
+    enter(params: any) {
         if ('position' in params && !('sliderPosition' in this)) {
             // track parent slider position for when jawbone closes
             this.sliderPosition = params.position;
@@ -97,9 +109,9 @@ export class Jawbone extends TitlePanel {
         super.enter(params);
     }
 
-    exit() {
+    exit(): any {
         super.exit();
-        let params = { jawboneRow: this.row };
+        const params: any = { jawboneRow: this.row };
         if ('sliderPosition' in this) {
             params.position = this.sliderPosition;
         }

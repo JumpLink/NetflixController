@@ -4,7 +4,7 @@ declare function runHandler(path: string, forceLoad: boolean): void;
 
 export class Profiles extends StaticNavigatable {
     getComponents(): any[] {
-        return document.querySelectorAll('.choose-profile a.profile-link');
+        return Array.from(document.querySelectorAll('.choose-profile a.profile-link'));
     }
 
     style(component: any, selected: boolean): void {

@@ -4,7 +4,7 @@ declare function getTransparentNetflixRed(opacity: number): string;
 
 export class Menu extends StaticNavigatable {
     getComponents(): any[] {
-        return document.querySelectorAll('li.navigation-tab a');
+        return Array.from(document.querySelectorAll('li.navigation-tab a'));
     }
 
     style(component: any, selected: boolean): void {
