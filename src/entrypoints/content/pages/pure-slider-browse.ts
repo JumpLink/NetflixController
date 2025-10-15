@@ -1,12 +1,12 @@
-import { Slider } from '../components/slider.js';
-import { SliderBrowse } from './slider-browse.js';
+import { Slider } from '../components/slider.ts';
+import { SliderBrowse } from './slider-browse.ts';
 
 export class PureSliderBrowse extends SliderBrowse {
-    constructor(loadingRow) {
+    constructor(loadingRow: number) {
         super(loadingRow);
     }
 
-    onLoad() {
+    onLoad(): void {
         super.onLoad();
         this.addNavigatable(1, Slider.getSlider(this.loadingRow));
         this.setNavigatable(1);
