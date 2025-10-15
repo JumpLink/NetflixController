@@ -4,7 +4,7 @@ import type { GamepadState } from "../../types/gamepad";
 import type { ContentScriptMessage } from "../../types/messages";
 import type { Settings } from "../../types/settings";
 import { gamepadMappings } from "../../utils/gamepad-icons.ts";
-import { gamepads, StandardMapping } from "../../utils/gamepads.ts";
+import { Gamepads, StandardMapping } from "../../utils/gamepads.ts";
 import * as S from "../../utils/storage-items";
 
 // Import CSS - WXT will automatically add this to the manifest
@@ -254,7 +254,7 @@ export default defineContentScript({
 		}
 
 		function isStandardGamepadConnected() {
-			return Object.values(gamepads.gamepads || {}).some(
+			return Object.values(Gamepads.gamepads || {}).some(
 				(g: GamepadState) => g.mapping === "standard",
 			);
 		}

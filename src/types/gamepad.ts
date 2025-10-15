@@ -1,19 +1,43 @@
 // Gamepad related types
 
+/**
+ * Represents a gamepad button with its current state
+ */
 export interface GamepadButton {
+	/** Whether the button is currently pressed */
 	pressed: boolean;
+	/** Whether the button is currently being touched (if supported) */
 	touched?: boolean;
+	/** The current value of the button (0-1, typically 0 or 1 except for triggers) */
 	value: number;
 }
 
+/**
+ * Represents the state and interface of a gamepad
+ */
 export interface GamepadState {
+	/** Array of axis values (-1 to 1) */
 	axes: readonly number[];
+	/** Array of button states */
 	buttons: readonly GamepadButton[];
+	/** Whether the gamepad is currently connected */
 	connected: boolean;
+	/** Unique identifier for the gamepad */
 	id: string;
+	/** Index of the gamepad in the browser's gamepad list */
 	index: number;
+	/** Mapping type, typically "standard" or "" */
 	mapping: string;
+	/** Timestamp of the last update */
 	timestamp: number;
+	/** Deadzone value for joystick movement (0-1) */
+	joystickDeadzone?: number;
+	/** Add an event listener to this gamepad */
+	addEventListener(type: string, listener: (...args: unknown[]) => void): void;
+	/** Update the gamepad state from browser data */
+	update(gamepad: unknown): void;
+	/** Internal reference to previous state for comparison */
+	_last?: unknown;
 }
 
 export interface GamepadMapping {

@@ -5,5 +5,6 @@ export * from "./components";
 export * from "./gamepad.ts";
 export * from "./handlers.ts";
 export * from "./messages.ts";
+export * from "./pseudostyler.ts";
 export * from "./settings.ts";
 export * from "./storage.ts";

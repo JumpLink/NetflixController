@@ -1,6 +1,6 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: Popup script handles dynamic gamepad events and interactions requiring flexible typing for event handlers and button state tracking. */
 import { gamepadMappings } from "../../utils/gamepad-icons.ts";
-import { gamepads, StandardMapping } from "../../utils/gamepads.ts";
+import { Gamepads, StandardMapping } from "../../utils/gamepads.ts";
 import * as S from "../../utils/storage-items";
 
 let currentMapping = "Xbox One";
@@ -49,7 +49,7 @@ S.buttonImageMapping.onChanged((v) => {
 	}
 });
 
-gamepads.addEventListener("connect", (e: any) => {
+Gamepads.addEventListener("connect", (e: any) => {
 	console.log("Gamepad connected:");
 	console.log(e.gamepad);
 	const countElement = document.getElementById("count");
@@ -75,7 +75,7 @@ gamepads.addEventListener("connect", (e: any) => {
 	);
 });
 
-gamepads.addEventListener("disconnect", (e: any) => {
+Gamepads.addEventListener("disconnect", (e: any) => {
 	console.log("Gamepad disconnected:");
 	console.log(e.gamepad);
 	const countElement = document.getElementById("count");
@@ -104,7 +104,7 @@ if (optionsElement) {
 moveJoystick([0, 0], true);
 moveJoystick([0, 0], false);
 gamepadMappings.buttonsPath = "/assets/buttons";
-gamepads.start();
+Gamepads.start();
 
 function showPressedButton(index: number) {
 	if (!pressedButtons[index]) {
@@ -146,7 +146,7 @@ function updateCompatibility() {
 	const warning = document.getElementById("no-standard-gamepad") as HTMLElement;
 	if (warning) {
 		if (
-			!Object.values(gamepads.gamepads || {}).some(
+			!Object.values(Gamepads.gamepads || {}).some(
 				(g: any) => g.gamepad.mapping === "standard",
 			)
 		) {

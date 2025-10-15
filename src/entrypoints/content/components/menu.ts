@@ -2,7 +2,7 @@ import type {
 	NavigatableComponent,
 	StyleableComponent,
 } from "../../../types/components.ts";
-import type PseudoStyler from "../../../utils/pseudostyler.ts";
+import type { PseudoStyler } from "../../../utils/pseudostyler.ts";
 import { StaticNavigatable } from "./static-navigatable.ts";
 
 declare function getTransparentNetflixRed(opacity: number): string;

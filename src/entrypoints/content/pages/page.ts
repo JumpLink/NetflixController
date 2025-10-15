@@ -3,7 +3,7 @@ import type {
 	ExitResult,
 	NavigationAction,
 } from "../../../types/components";
-import PseudoStyler from "../../../utils/pseudostyler.ts";
+import { PseudoStyler } from "../../../utils/pseudostyler.ts";
 import { DIRECTION } from "../components/direction.ts";
 import type { Navigatable } from "../components/navigatable.ts";
 
