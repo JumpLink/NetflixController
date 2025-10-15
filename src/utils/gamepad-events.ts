@@ -1,33 +1,5 @@
 import type { GamepadState } from "../types/gamepad";
-
-/**
- * Browser detection utilities for gamepad API differences
- */
-export const BrowserDetection = {
-	/**
-	 * Detects if the current browser is Firefox
-	 */
-	isFirefox(): boolean {
-		return navigator.userAgent.toLowerCase().includes("firefox");
-	},
-
-	/**
-	 * Detects if the current browser is Chrome
-	 */
-	isChrome(): boolean {
-		return navigator.userAgent.toLowerCase().includes("chrome");
-	},
-
-	/**
-	 * Detects if the current browser is Safari
-	 */
-	isSafari(): boolean {
-		return (
-			navigator.userAgent.toLowerCase().includes("safari") &&
-			!navigator.userAgent.toLowerCase().includes("chrome")
-		);
-	},
-} as const;
+import { BrowserDetection } from "./browser-detection";
 
 /**
  * Configuration for joystick event listeners
