@@ -1,5 +1,6 @@
 import gameControl from "@ribajs/gamecontroller.js";
 import type { GamepadState } from "../../types/gamepad";
+import { getControllerMapping } from "../../utils/controller-detection";
 import { gamepadMappings } from "../../utils/gamepad-icons.ts";
 import * as S from "../../utils/storage-items";
 
@@ -49,6 +50,10 @@ S.buttonImageMapping.onChanged((v) => {
 	}
 });
 
+// Track joystick values globally for beforeCycle reset
+const leftJoystickValues = [0, 0];
+const rightJoystickValues = [0, 0];
+
 gameControl.on("connect", (gamepad: GamepadState) => {
 	console.log("Gamepad connected:");
 	console.log(gamepad);
@@ -57,6 +62,24 @@ gameControl.on("connect", (gamepad: GamepadState) => {
 		countElement.textContent = (++count).toString();
 	}
 	updateCompatibility();
+
+	// Auto-detect controller type
+	const detectedMapping = getControllerMapping(
+		gamepad.controllerId,
+		currentMapping,
+	);
+	if (detectedMapping !== currentMapping) {
+		console.log(
+			`Auto-detected controller as ${detectedMapping} (${gamepad.controllerId})`,
+		);
+		currentMapping = detectedMapping;
+		const mappingElement = document.getElementById(
+			"gamepad-mapping",
+		) as HTMLSelectElement;
+		if (mappingElement) {
+			mappingElement.value = currentMapping;
+		}
+	}
 
 	// Add button event listeners for all buttons
 	for (let i = 0; i <= 16; i++) {
@@ -70,9 +93,6 @@ gameControl.on("connect", (gamepad: GamepadState) => {
 	}
 
 	// Add joystick event listeners - track the axis values for visualization
-	const leftJoystickValues = [0, 0];
-	const rightJoystickValues = [0, 0];
-
 	// Left joystick - track horizontal (axis 0)
 	gamepad.on("left0", () => {
 		leftJoystickValues[0] = -1;
@@ -110,40 +130,6 @@ gameControl.on("connect", (gamepad: GamepadState) => {
 		rightJoystickValues[1] = 1;
 		moveJoystick(rightJoystickValues, false);
 	});
-
-	// Reset joystick visualization when released
-	gamepad.after("up0", () => {
-		leftJoystickValues[1] = 0;
-		moveJoystick(leftJoystickValues, true);
-	});
-	gamepad.after("down0", () => {
-		leftJoystickValues[1] = 0;
-		moveJoystick(leftJoystickValues, true);
-	});
-	gamepad.after("left0", () => {
-		leftJoystickValues[0] = 0;
-		moveJoystick(leftJoystickValues, true);
-	});
-	gamepad.after("right0", () => {
-		leftJoystickValues[0] = 0;
-		moveJoystick(leftJoystickValues, true);
-	});
-	gamepad.after("up1", () => {
-		rightJoystickValues[1] = 0;
-		moveJoystick(rightJoystickValues, false);
-	});
-	gamepad.after("down1", () => {
-		rightJoystickValues[1] = 0;
-		moveJoystick(rightJoystickValues, false);
-	});
-	gamepad.after("left1", () => {
-		rightJoystickValues[0] = 0;
-		moveJoystick(rightJoystickValues, false);
-	});
-	gamepad.after("right1", () => {
-		rightJoystickValues[0] = 0;
-		moveJoystick(rightJoystickValues, false);
-	});
 });
 
 gameControl.on("disconnect", (index: number) => {
@@ -175,7 +161,18 @@ if (optionsElement) {
 moveJoystick([0, 0], true);
 moveJoystick([0, 0], false);
 gamepadMappings.buttonsPath = "/assets/buttons";
-// gameControl is automatically initialized, no need to call start()
+
+// Use beforeCycle to reset joystick visualization each frame (like in example-3)
+gameControl.on("beforeCycle", () => {
+	// Reset joystick values if no direction is pressed
+	// This creates smooth visualization without needing many .after() handlers
+	leftJoystickValues[0] = 0;
+	leftJoystickValues[1] = 0;
+	rightJoystickValues[0] = 0;
+	rightJoystickValues[1] = 0;
+	moveJoystick(leftJoystickValues, true);
+	moveJoystick(rightJoystickValues, false);
+});
 
 function showPressedButton(index: number) {
 	if (!pressedButtons[index]) {

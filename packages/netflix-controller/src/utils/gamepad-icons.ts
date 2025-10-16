@@ -1,125 +1,129 @@
+import { GAMEPAD_BUTTONS } from "@ribajs/gamecontroller.js";
+
 interface GamepadMapping {
 	name: string;
 	filePrefix: string;
-	buttons: string[];
+	buttons: Record<number, string>;
 }
 
-// untested
-const PS3Mapping = {
+// PlayStation 3 Mapping
+const PS3Mapping: GamepadMapping = {
 	name: "PS3",
 	filePrefix: "PS3_",
-	buttons: [
-		"Cross",
-		"Circle",
-		"Square",
-		"Triangle",
-		"L1",
-		"R1",
-		"L2",
-		"R2",
-		"Select",
-		"Start",
-		"Left_Stick",
-		"Right_Stick",
-		"Dpad_Up",
-		"Dpad_Down",
-		"Dpad_Left",
-		"Dpad_Right",
-	],
+	buttons: {
+		[GAMEPAD_BUTTONS.BUTTON_BOTTOM]: "Cross",
+		[GAMEPAD_BUTTONS.BUTTON_RIGHT]: "Circle",
+		[GAMEPAD_BUTTONS.BUTTON_LEFT]: "Square",
+		[GAMEPAD_BUTTONS.BUTTON_TOP]: "Triangle",
+		[GAMEPAD_BUTTONS.BUMPER_LEFT]: "L1",
+		[GAMEPAD_BUTTONS.BUMPER_RIGHT]: "R1",
+		[GAMEPAD_BUTTONS.TRIGGER_LEFT]: "L2",
+		[GAMEPAD_BUTTONS.TRIGGER_RIGHT]: "R2",
+		[GAMEPAD_BUTTONS.BUTTON_CONTROL_LEFT]: "Select",
+		[GAMEPAD_BUTTONS.BUTTON_CONTROL_RIGHT]: "Start",
+		[GAMEPAD_BUTTONS.BUTTON_JOYSTICK_LEFT]: "Left_Stick",
+		[GAMEPAD_BUTTONS.BUTTON_JOYSTICK_RIGHT]: "Right_Stick",
+		[GAMEPAD_BUTTONS.D_PAD_UP]: "Dpad_Up",
+		[GAMEPAD_BUTTONS.D_PAD_BOTTOM]: "Dpad_Down",
+		[GAMEPAD_BUTTONS.D_PAD_LEFT]: "Dpad_Left",
+		[GAMEPAD_BUTTONS.D_PAD_RIGHT]: "Dpad_Right",
+	},
 };
 
-// untested
-const PS4Mapping = {
+// PlayStation 4 Mapping
+const PS4Mapping: GamepadMapping = {
 	name: "PS4",
 	filePrefix: "PS4_",
-	buttons: [
-		"Cross",
-		"Circle",
-		"Square",
-		"Triangle",
-		"L1",
-		"R1",
-		"L2",
-		"R2",
-		"Share",
-		"Options",
-		"Left_Stick",
-		"Right_Stick",
-		"Dpad_Up",
-		"Dpad_Down",
-		"Dpad_Left",
-		"Dpad_Right",
-	],
+	buttons: {
+		[GAMEPAD_BUTTONS.BUTTON_BOTTOM]: "Cross",
+		[GAMEPAD_BUTTONS.BUTTON_RIGHT]: "Circle",
+		[GAMEPAD_BUTTONS.BUTTON_LEFT]: "Square",
+		[GAMEPAD_BUTTONS.BUTTON_TOP]: "Triangle",
+		[GAMEPAD_BUTTONS.BUMPER_LEFT]: "L1",
+		[GAMEPAD_BUTTONS.BUMPER_RIGHT]: "R1",
+		[GAMEPAD_BUTTONS.TRIGGER_LEFT]: "L2",
+		[GAMEPAD_BUTTONS.TRIGGER_RIGHT]: "R2",
+		[GAMEPAD_BUTTONS.BUTTON_CONTROL_LEFT]: "Share",
+		[GAMEPAD_BUTTONS.BUTTON_CONTROL_RIGHT]: "Options",
+		[GAMEPAD_BUTTONS.BUTTON_JOYSTICK_LEFT]: "Left_Stick",
+		[GAMEPAD_BUTTONS.BUTTON_JOYSTICK_RIGHT]: "Right_Stick",
+		[GAMEPAD_BUTTONS.D_PAD_UP]: "Dpad_Up",
+		[GAMEPAD_BUTTONS.D_PAD_BOTTOM]: "Dpad_Down",
+		[GAMEPAD_BUTTONS.D_PAD_LEFT]: "Dpad_Left",
+		[GAMEPAD_BUTTONS.D_PAD_RIGHT]: "Dpad_Right",
+	},
 };
 
-// untested
-const Xbox360Mapping = {
+// Xbox 360 Mapping
+const Xbox360Mapping: GamepadMapping = {
 	name: "Xbox 360",
 	filePrefix: "360_",
-	buttons: [
-		"A",
-		"B",
-		"X",
-		"Y",
-		"LB",
-		"RB",
-		"LT",
-		"RT",
-		"Back",
-		"Start",
-		"Left_Stick",
-		"Right_Stick",
-		"Dpad_Up",
-		"Dpad_Down",
-		"Dpad_Left",
-		"Dpad_Right",
-	],
+	buttons: {
+		[GAMEPAD_BUTTONS.BUTTON_BOTTOM]: "A",
+		[GAMEPAD_BUTTONS.BUTTON_RIGHT]: "B",
+		[GAMEPAD_BUTTONS.BUTTON_LEFT]: "X",
+		[GAMEPAD_BUTTONS.BUTTON_TOP]: "Y",
+		[GAMEPAD_BUTTONS.BUMPER_LEFT]: "LB",
+		[GAMEPAD_BUTTONS.BUMPER_RIGHT]: "RB",
+		[GAMEPAD_BUTTONS.TRIGGER_LEFT]: "LT",
+		[GAMEPAD_BUTTONS.TRIGGER_RIGHT]: "RT",
+		[GAMEPAD_BUTTONS.BUTTON_CONTROL_LEFT]: "Back",
+		[GAMEPAD_BUTTONS.BUTTON_CONTROL_RIGHT]: "Start",
+		[GAMEPAD_BUTTONS.BUTTON_JOYSTICK_LEFT]: "Left_Stick",
+		[GAMEPAD_BUTTONS.BUTTON_JOYSTICK_RIGHT]: "Right_Stick",
+		[GAMEPAD_BUTTONS.D_PAD_UP]: "Dpad_Up",
+		[GAMEPAD_BUTTONS.D_PAD_BOTTOM]: "Dpad_Down",
+		[GAMEPAD_BUTTONS.D_PAD_LEFT]: "Dpad_Left",
+		[GAMEPAD_BUTTONS.D_PAD_RIGHT]: "Dpad_Right",
+	},
 };
 
-const XboxOneMapping = {
+// Xbox One Mapping
+const XboxOneMapping: GamepadMapping = {
 	name: "Xbox One",
 	filePrefix: "XboxOne_",
-	buttons: [
-		"A",
-		"B",
-		"X",
-		"Y",
-		"LB",
-		"RB",
-		"LT",
-		"RT",
-		"Windows",
-		"Menu",
-		"Left_Stick",
-		"Right_Stick",
-		"Dpad_Up",
-		"Dpad_Down",
-		"Dpad_Left",
-		"Dpad_Right",
-	],
+	buttons: {
+		[GAMEPAD_BUTTONS.BUTTON_BOTTOM]: "A",
+		[GAMEPAD_BUTTONS.BUTTON_RIGHT]: "B",
+		[GAMEPAD_BUTTONS.BUTTON_LEFT]: "X",
+		[GAMEPAD_BUTTONS.BUTTON_TOP]: "Y",
+		[GAMEPAD_BUTTONS.BUMPER_LEFT]: "LB",
+		[GAMEPAD_BUTTONS.BUMPER_RIGHT]: "RB",
+		[GAMEPAD_BUTTONS.TRIGGER_LEFT]: "LT",
+		[GAMEPAD_BUTTONS.TRIGGER_RIGHT]: "RT",
+		[GAMEPAD_BUTTONS.BUTTON_CONTROL_LEFT]: "Windows",
+		[GAMEPAD_BUTTONS.BUTTON_CONTROL_RIGHT]: "Menu",
+		[GAMEPAD_BUTTONS.BUTTON_JOYSTICK_LEFT]: "Left_Stick",
+		[GAMEPAD_BUTTONS.BUTTON_JOYSTICK_RIGHT]: "Right_Stick",
+		[GAMEPAD_BUTTONS.D_PAD_UP]: "Dpad_Up",
+		[GAMEPAD_BUTTONS.D_PAD_BOTTOM]: "Dpad_Down",
+		[GAMEPAD_BUTTONS.D_PAD_LEFT]: "Dpad_Left",
+		[GAMEPAD_BUTTONS.D_PAD_RIGHT]: "Dpad_Right",
+	},
 };
 
-const SwitchMapping = {
+// Nintendo Switch Mapping
+const SwitchMapping: GamepadMapping = {
 	name: "Switch",
 	filePrefix: "Switch_",
-	buttons: [
-		"B",
-		"A",
-		"Y",
-		"X",
-		"L",
-		"R",
-		"ZL",
-		"ZR",
-		"Minus",
-		"Plus",
-		"Left_Stick",
-		"Right_Stick",
-		"Dpad_Up",
-		"Dpad_Down",
-		"Dpad_Left",
-		"Dpad_Right",
-	],
+	buttons: {
+		[GAMEPAD_BUTTONS.BUTTON_BOTTOM]: "B", // Bottom button is B on Switch
+		[GAMEPAD_BUTTONS.BUTTON_RIGHT]: "A", // Right button is A on Switch
+		[GAMEPAD_BUTTONS.BUTTON_LEFT]: "Y", // Left button is Y on Switch
+		[GAMEPAD_BUTTONS.BUTTON_TOP]: "X", // Top button is X on Switch
+		[GAMEPAD_BUTTONS.BUMPER_LEFT]: "L",
+		[GAMEPAD_BUTTONS.BUMPER_RIGHT]: "R",
+		[GAMEPAD_BUTTONS.TRIGGER_LEFT]: "ZL",
+		[GAMEPAD_BUTTONS.TRIGGER_RIGHT]: "ZR",
+		[GAMEPAD_BUTTONS.BUTTON_CONTROL_LEFT]: "Minus",
+		[GAMEPAD_BUTTONS.BUTTON_CONTROL_RIGHT]: "Plus",
+		[GAMEPAD_BUTTONS.BUTTON_JOYSTICK_LEFT]: "Left_Stick",
+		[GAMEPAD_BUTTONS.BUTTON_JOYSTICK_RIGHT]: "Right_Stick",
+		[GAMEPAD_BUTTONS.D_PAD_UP]: "Dpad_Up",
+		[GAMEPAD_BUTTONS.D_PAD_BOTTOM]: "Dpad_Down",
+		[GAMEPAD_BUTTONS.D_PAD_LEFT]: "Dpad_Left",
+		[GAMEPAD_BUTTONS.D_PAD_RIGHT]: "Dpad_Right",
+	},
 };
 
 const ALL_MAPPINGS = [

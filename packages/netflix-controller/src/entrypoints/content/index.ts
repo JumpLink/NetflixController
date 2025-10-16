@@ -5,6 +5,7 @@ import gameControl, {
 import type { ExitResult, NavigationAction } from "../../types/components";
 import type { ContentScriptMessage } from "../../types/messages";
 import type { Settings } from "../../types/settings";
+import { getControllerMapping } from "../../utils/controller-detection";
 import { gamepadMappings } from "../../utils/gamepad-icons.ts";
 import * as S from "../../utils/storage-items";
 
@@ -294,20 +295,6 @@ export default defineContentScript({
 			console.log("Native gamepaddisconnected:", e.gamepad?.id, e);
 		});
 
-		// Temporary debug dump of navigator.getGamepads to verify visibility
-		function debugDumpGamepads(tag: string) {
-			try {
-				const gps =
-					(navigator as { getGamepads?: () => Gamepad[] }).getGamepads?.() ||
-					[];
-				console.log(`Gamepads[${tag}] count=`, gps.length, gps);
-			} catch (e) {
-				console.warn("navigator.getGamepads failed:", e);
-			}
-		}
-		setTimeout(() => debugDumpGamepads("t+0.5s"), 500);
-		setTimeout(() => debugDumpGamepads("t+2s"), 2000);
-
 		// Setup button event handlers for a gamepad
 		function setupButtonHandlers(gamepad: GamepadState) {
 			// Setup handlers for all possible buttons (0-16)
@@ -337,7 +324,8 @@ export default defineContentScript({
 		// Setup joystick event handlers for a gamepad
 		function setupJoystickHandlers(gamepad: GamepadState) {
 			// Left joystick directional events - use .before() to fire only once per direction
-			gamepad.before("up0", () => {
+			// Using aliases "up", "down", "left", "right" (equivalent to "up0", "down0", "left0", "right0")
+			gamepad.before("up", () => {
 				try {
 					if (actionHandler.onDirection) {
 						actionHandler.onDirection(DIRECTION.UP);
@@ -348,7 +336,7 @@ export default defineContentScript({
 					);
 				}
 			});
-			gamepad.before("down0", () => {
+			gamepad.before("down", () => {
 				try {
 					if (actionHandler.onDirection) {
 						actionHandler.onDirection(DIRECTION.DOWN);
@@ -359,7 +347,7 @@ export default defineContentScript({
 					);
 				}
 			});
-			gamepad.before("left0", () => {
+			gamepad.before("left", () => {
 				try {
 					if (actionHandler.onDirection) {
 						actionHandler.onDirection(DIRECTION.LEFT);
@@ -370,7 +358,7 @@ export default defineContentScript({
 					);
 				}
 			});
-			gamepad.before("right0", () => {
+			gamepad.before("right", () => {
 				try {
 					if (actionHandler.onDirection) {
 						actionHandler.onDirection(DIRECTION.RIGHT);
@@ -394,7 +382,21 @@ export default defineContentScript({
 			numGamepads++;
 			showActionHints();
 			updateCompatibility();
-			log(`Gamepad connected: ${gamepad.id || "Unknown"}`);
+
+			// Auto-detect controller type and temporarily override user preference
+			const detectedMapping = getControllerMapping(
+				gamepad.controllerId,
+				settings.buttonImageMapping,
+			);
+			if (detectedMapping !== settings.buttonImageMapping) {
+				log(
+					`Gamepad connected: ${gamepad.controllerId || "Unknown"} - Auto-detected as ${detectedMapping}`,
+				);
+				settings.buttonImageMapping = detectedMapping;
+				actionHandler.updateHints();
+			} else {
+				log(`Gamepad connected: ${gamepad.controllerId || "Unknown"}`);
+			}
 
 			// Setup all event handlers for this gamepad
 			setupButtonHandlers(gamepad);
