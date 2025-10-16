@@ -47,6 +47,7 @@ export default defineContentScript({
 		let numGamepads = 0;
 		let hasConnectedGamepad = false;
 		let keyboard: VirtualKeyboardImpl | null = null;
+		let gamepadInputEnabled = true; // Controls whether gamepad input is processed
 		const handlerHistory: string[] = [];
 		let currentHandler: NavigatablePage | null = null;
 		const settings: Settings = {
@@ -142,10 +143,13 @@ export default defineContentScript({
 						runHandler(request.path);
 					}
 				} else if (request.message === "disableGamepadInput") {
-					// gameControl doesn't have a stop method, it's always running
-					// We can handle this differently if needed
+					// Disable input processing while popup is open (events still fire, but are ignored)
+					gamepadInputEnabled = false;
+					log("Gamepad input disabled (popup open)");
 				} else if (request.message === "enableGamepadInput") {
-					// gameControl is always running, no need to start
+					// Re-enable input processing when popup closes
+					gamepadInputEnabled = true;
+					log("Gamepad input enabled (popup closed)");
 				}
 			},
 		);
@@ -301,6 +305,7 @@ export default defineContentScript({
 			for (let i = 0; i <= 16; i++) {
 				const buttonIndex = i;
 				gamepad.before(`button${buttonIndex}`, () => {
+					if (!gamepadInputEnabled) return; // Ignore input when disabled (e.g., popup open)
 					try {
 						actionHandler.onButtonPress(buttonIndex);
 					} catch (error) {
@@ -310,6 +315,7 @@ export default defineContentScript({
 					}
 				});
 				gamepad.after(`button${buttonIndex}`, () => {
+					if (!gamepadInputEnabled) return; // Ignore input when disabled (e.g., popup open)
 					try {
 						actionHandler.onButtonRelease(buttonIndex);
 					} catch (error) {
@@ -326,6 +332,7 @@ export default defineContentScript({
 			// Left joystick directional events - use .before() to fire only once per direction
 			// Using aliases "up", "down", "left", "right" (equivalent to "up0", "down0", "left0", "right0")
 			gamepad.before("up", () => {
+				if (!gamepadInputEnabled) return; // Ignore input when disabled (e.g., popup open)
 				try {
 					if (actionHandler.onDirection) {
 						actionHandler.onDirection(DIRECTION.UP);
@@ -337,6 +344,7 @@ export default defineContentScript({
 				}
 			});
 			gamepad.before("down", () => {
+				if (!gamepadInputEnabled) return; // Ignore input when disabled (e.g., popup open)
 				try {
 					if (actionHandler.onDirection) {
 						actionHandler.onDirection(DIRECTION.DOWN);
@@ -348,6 +356,7 @@ export default defineContentScript({
 				}
 			});
 			gamepad.before("left", () => {
+				if (!gamepadInputEnabled) return; // Ignore input when disabled (e.g., popup open)
 				try {
 					if (actionHandler.onDirection) {
 						actionHandler.onDirection(DIRECTION.LEFT);
@@ -359,6 +368,7 @@ export default defineContentScript({
 				}
 			});
 			gamepad.before("right", () => {
+				if (!gamepadInputEnabled) return; // Ignore input when disabled (e.g., popup open)
 				try {
 					if (actionHandler.onDirection) {
 						actionHandler.onDirection(DIRECTION.RIGHT);
