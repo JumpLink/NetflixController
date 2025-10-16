@@ -52,7 +52,7 @@ export default defineContentScript({
 		let currentHandler: NavigatablePage | null = null;
 		const settings: Settings = {
 			showActionHints: true,
-			buttonImageMapping: "Xbox One",
+			buttonImageMapping: "Xbox Series",
 			showConnectionHint: true,
 			showCompatibilityWarning: true,
 		};
@@ -96,7 +96,7 @@ export default defineContentScript({
 				settings.showActionHints = v ?? true;
 			}),
 			S.buttonImageMapping.get().then((v) => {
-				settings.buttonImageMapping = v ?? "Xbox One";
+				settings.buttonImageMapping = v ?? "Xbox Series";
 			}),
 			S.showConnectionHint.get().then((v) => {
 				settings.showConnectionHint = v ?? true;

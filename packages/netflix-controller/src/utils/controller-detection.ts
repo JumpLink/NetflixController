@@ -8,43 +8,67 @@ export function detectControllerType(gamepadId: string): string | null {
 
 	const id = gamepadId.toLowerCase();
 
-	// PlayStation Controllers
+	// PlayStation Controllers (check newest first)
 	if (
-		id.includes("playstation") ||
-		id.includes("ps5") ||
-		id.includes("dualsense")
+		id.includes("054c-0ce6") || // PS5 USB Vendor/Product ID
+		id.includes("dualsense") ||
+		id.includes("ps5")
 	) {
-		return "PS4"; // Use PS4 mapping for PS5 (same layout)
+		return "PS5";
 	}
-	if (id.includes("ps4") || id.includes("dualshock 4")) {
+	if (
+		id.includes("054c-09cc") || // PS4 USB Vendor/Product ID
+		id.includes("ps4") ||
+		id.includes("dualshock 4") ||
+		id.includes("playstation 4")
+	) {
 		return "PS4";
 	}
 	if (id.includes("ps3") || id.includes("sixaxis")) {
 		return "PS3";
 	}
 
-	// Xbox Controllers
+	// Xbox Controllers (check newest first)
+	if (
+		id.includes("045e-0b13") || // Xbox Series X USB ID
+		id.includes("045e-0b12") || // Xbox Series S USB ID
+		id.includes("xbox series") ||
+		(id.includes("xbox") && id.includes("series"))
+	) {
+		return "Xbox Series";
+	}
 	if (
 		id.includes("xbox") &&
-		(id.includes("one") || id.includes("series") || id.includes("wireless"))
+		(id.includes("one") || id.includes("wireless controller"))
 	) {
-		return "Xbox One"; // Series X/S use same layout as Xbox One
+		return "Xbox One";
 	}
 	if (id.includes("xbox") && id.includes("360")) {
 		return "Xbox 360";
 	}
 	if (id.includes("xinput") || id.includes("xbox")) {
-		// Generic Xbox-like controller
-		return "Xbox One";
+		// Generic Xbox-like controller - use Series as default (most modern)
+		return "Xbox Series";
 	}
 
 	// Nintendo Switch
 	if (
+		id.includes("057e-2009") || // Switch Pro Controller USB ID
 		id.includes("switch") ||
 		id.includes("joy-con") ||
 		id.includes("pro controller")
 	) {
 		return "Switch";
+	}
+
+	// Steam Deck
+	if (
+		id.includes("28de-1205") || // Steam Deck Controller USB ID
+		id.includes("valve") ||
+		id.includes("steam") ||
+		id.includes("neptune")
+	) {
+		return "Steam Deck";
 	}
 
 	// Generic/Unknown - use user preference

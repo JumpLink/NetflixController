@@ -102,6 +102,54 @@ const XboxOneMapping: GamepadMapping = {
 	},
 };
 
+// PlayStation 5 Mapping
+const PS5Mapping: GamepadMapping = {
+	name: "PS5",
+	filePrefix: "PS5_",
+	buttons: {
+		[GAMEPAD_BUTTONS.BUTTON_BOTTOM]: "Cross",
+		[GAMEPAD_BUTTONS.BUTTON_RIGHT]: "Circle",
+		[GAMEPAD_BUTTONS.BUTTON_LEFT]: "Square",
+		[GAMEPAD_BUTTONS.BUTTON_TOP]: "Triangle",
+		[GAMEPAD_BUTTONS.BUMPER_LEFT]: "L1",
+		[GAMEPAD_BUTTONS.BUMPER_RIGHT]: "R1",
+		[GAMEPAD_BUTTONS.TRIGGER_LEFT]: "L2",
+		[GAMEPAD_BUTTONS.TRIGGER_RIGHT]: "R2",
+		[GAMEPAD_BUTTONS.BUTTON_CONTROL_LEFT]: "Share",
+		[GAMEPAD_BUTTONS.BUTTON_CONTROL_RIGHT]: "Options",
+		[GAMEPAD_BUTTONS.BUTTON_JOYSTICK_LEFT]: "Left_Stick",
+		[GAMEPAD_BUTTONS.BUTTON_JOYSTICK_RIGHT]: "Right_Stick",
+		[GAMEPAD_BUTTONS.D_PAD_UP]: "Dpad_Up",
+		[GAMEPAD_BUTTONS.D_PAD_BOTTOM]: "Dpad_Down",
+		[GAMEPAD_BUTTONS.D_PAD_LEFT]: "Dpad_Left",
+		[GAMEPAD_BUTTONS.D_PAD_RIGHT]: "Dpad_Right",
+	},
+};
+
+// Xbox Series X/S Mapping
+const XboxSeriesMapping: GamepadMapping = {
+	name: "Xbox Series",
+	filePrefix: "XboxSeriesX_",
+	buttons: {
+		[GAMEPAD_BUTTONS.BUTTON_BOTTOM]: "A",
+		[GAMEPAD_BUTTONS.BUTTON_RIGHT]: "B",
+		[GAMEPAD_BUTTONS.BUTTON_LEFT]: "X",
+		[GAMEPAD_BUTTONS.BUTTON_TOP]: "Y",
+		[GAMEPAD_BUTTONS.BUMPER_LEFT]: "LB",
+		[GAMEPAD_BUTTONS.BUMPER_RIGHT]: "RB",
+		[GAMEPAD_BUTTONS.TRIGGER_LEFT]: "LT",
+		[GAMEPAD_BUTTONS.TRIGGER_RIGHT]: "RT",
+		[GAMEPAD_BUTTONS.BUTTON_CONTROL_LEFT]: "View",
+		[GAMEPAD_BUTTONS.BUTTON_CONTROL_RIGHT]: "Menu",
+		[GAMEPAD_BUTTONS.BUTTON_JOYSTICK_LEFT]: "Left_Stick",
+		[GAMEPAD_BUTTONS.BUTTON_JOYSTICK_RIGHT]: "Right_Stick",
+		[GAMEPAD_BUTTONS.D_PAD_UP]: "Dpad_Up",
+		[GAMEPAD_BUTTONS.D_PAD_BOTTOM]: "Dpad_Down",
+		[GAMEPAD_BUTTONS.D_PAD_LEFT]: "Dpad_Left",
+		[GAMEPAD_BUTTONS.D_PAD_RIGHT]: "Dpad_Right",
+	},
+};
+
 // Nintendo Switch Mapping
 const SwitchMapping: GamepadMapping = {
 	name: "Switch",
@@ -126,12 +174,39 @@ const SwitchMapping: GamepadMapping = {
 	},
 };
 
+// Steam Deck Mapping
+const SteamDeckMapping: GamepadMapping = {
+	name: "Steam Deck",
+	filePrefix: "SteamDeck_",
+	buttons: {
+		[GAMEPAD_BUTTONS.BUTTON_BOTTOM]: "A",
+		[GAMEPAD_BUTTONS.BUTTON_RIGHT]: "B",
+		[GAMEPAD_BUTTONS.BUTTON_LEFT]: "X",
+		[GAMEPAD_BUTTONS.BUTTON_TOP]: "Y",
+		[GAMEPAD_BUTTONS.BUMPER_LEFT]: "L1",
+		[GAMEPAD_BUTTONS.BUMPER_RIGHT]: "R1",
+		[GAMEPAD_BUTTONS.TRIGGER_LEFT]: "L2",
+		[GAMEPAD_BUTTONS.TRIGGER_RIGHT]: "R2",
+		[GAMEPAD_BUTTONS.BUTTON_CONTROL_LEFT]: "Minus",
+		[GAMEPAD_BUTTONS.BUTTON_CONTROL_RIGHT]: "Menu",
+		[GAMEPAD_BUTTONS.BUTTON_JOYSTICK_LEFT]: "Left_Stick",
+		[GAMEPAD_BUTTONS.BUTTON_JOYSTICK_RIGHT]: "Right_Stick",
+		[GAMEPAD_BUTTONS.D_PAD_UP]: "Dpad_Up",
+		[GAMEPAD_BUTTONS.D_PAD_BOTTOM]: "Dpad_Down",
+		[GAMEPAD_BUTTONS.D_PAD_LEFT]: "Dpad_Left",
+		[GAMEPAD_BUTTONS.D_PAD_RIGHT]: "Dpad_Right",
+	},
+};
+
 const ALL_MAPPINGS = [
 	PS3Mapping,
 	PS4Mapping,
+	PS5Mapping,
 	Xbox360Mapping,
 	XboxOneMapping,
+	XboxSeriesMapping,
 	SwitchMapping,
+	SteamDeckMapping,
 ];
 
 interface GamepadButtonInfo {

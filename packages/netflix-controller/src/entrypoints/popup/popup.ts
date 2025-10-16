@@ -4,7 +4,7 @@ import { getControllerMapping } from "../../utils/controller-detection";
 import { gamepadMappings } from "../../utils/gamepad-icons.ts";
 import * as S from "../../utils/storage-items";
 
-let currentMapping = "Xbox One";
+let currentMapping = "Xbox Series";
 const style = window.getComputedStyle(document.body);
 const CONTAINER_SIZE = parseFloat(
 	style.getPropertyValue("--joystick-container-size"),
@@ -30,7 +30,7 @@ browser.tabs.query({ currentWindow: true, active: true }, (tabs) => {
 S.buttonImageMapping
 	.get()
 	.then((v) => {
-		currentMapping = v ?? "Xbox One";
+		currentMapping = v ?? "Xbox Series";
 		const mappingElement = document.getElementById(
 			"gamepad-mapping",
 		) as HTMLSelectElement;
