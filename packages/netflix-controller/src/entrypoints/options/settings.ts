@@ -34,6 +34,12 @@ export const OPTIONS: Option[] = [
 			"PS5",
 			"Switch",
 			"Steam Deck",
+			"Steam",
+			"Google Stadia",
+			"Amazon Luna",
+			"Ouya",
+			"Wii",
+			"WiiU",
 		],
 		default: "Xbox Series",
 		condition: {

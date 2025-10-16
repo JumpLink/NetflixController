@@ -65,10 +65,60 @@ export function detectControllerType(gamepadId: string): string | null {
 	if (
 		id.includes("28de-1205") || // Steam Deck Controller USB ID
 		id.includes("valve") ||
-		id.includes("steam") ||
 		id.includes("neptune")
 	) {
 		return "Steam Deck";
+	}
+
+	// Steam Controller (older controller with trackpads)
+	if (
+		id.includes("28de-1142") || // Steam Controller USB ID
+		id.includes("steam controller")
+	) {
+		return "Steam";
+	}
+
+	// Google Stadia
+	if (
+		id.includes("18d1-9400") || // Stadia Controller USB ID
+		id.includes("stadia") ||
+		id.includes("google controller")
+	) {
+		return "Google Stadia";
+	}
+
+	// Amazon Luna
+	if (
+		id.includes("1949-0419") || // Luna Controller USB ID
+		id.includes("luna") ||
+		id.includes("amazon controller")
+	) {
+		return "Amazon Luna";
+	}
+
+	// Ouya
+	if (
+		id.includes("2836-0001") || // Ouya Controller USB ID
+		id.includes("ouya")
+	) {
+		return "Ouya";
+	}
+
+	// Nintendo Wii Controllers
+	if (
+		id.includes("057e-0306") || // Wii Remote
+		id.includes("wiimote") ||
+		id.includes("wii remote")
+	) {
+		return "Wii";
+	}
+
+	// Nintendo Wii U Controllers
+	if (
+		id.includes("057e-0330") || // Wii U Pro Controller
+		id.includes("wii u")
+	) {
+		return "WiiU";
 	}
 
 	// Generic/Unknown - use user preference

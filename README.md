@@ -17,7 +17,8 @@ Add Netflix Controller to your browser [here](https://chrome.google.com/webstore
 * Search for media using virtual keyboard
 * See current actions in the hints bar at the bottom of the viewport
 * Choose options when watching interactive media like Black Mirror Bandersnatch
-* Choose your button icons (Xbox 360 / Xbox One / PS3 / PS4)
+* Automatic controller detection with support for 14+ controller types
+* Choose your button icons (Xbox 360/One/Series, PS3/4/5, Switch, Steam Deck, Steam Controller, Stadia, Luna, Ouya, Wii, Wii U)
 * Test your gamepad mapping in the browser icon popup
 * Customize your experience in the extension options
 
@@ -47,9 +48,8 @@ Add Netflix Controller to your browser [here](https://chrome.google.com/webstore
 
 
 ## TODO
-* Firefox/Edge support (convert manifests, fullscreen action)
 * Continue mapping navigation controls to additional page elements (such as other jawbone options)
-* Support non-standard gamepad mappings / offer way to configure mappings
+* Offer way to configure gamepad mappings
 * Configure right joystick to control a virtual mouse
 * Dual action hints for action pairs like volume up/down
 * CSS classes for content outlines
@@ -66,10 +66,23 @@ Add Netflix Controller to your browser [here](https://chrome.google.com/webstore
 * Add remaining jawbone pane types
 * Auto skip intro
 
+## Supported Controllers
+
+The extension automatically detects and supports the following controllers:
+
+* **PlayStation**: PS3, PS4, PS5 (DualSense)
+* **Xbox**: Xbox 360, Xbox One, Xbox Series X|S
+* **Nintendo**: Switch, Wii, Wii U
+* **Steam**: Steam Deck, Steam Controller
+* **Cloud Gaming**: Google Stadia, Amazon Luna
+* **Retro**: Ouya
+* And any controller with standard gamepad mapping
+
 ## Libraries and Materials Used
 * [pseudo:styler](https://github.com/TSedlar/pseudo-styler) - A module that allows for forcing an element to be styled with a pseudo-class.
-* [Gamepads.js](https://github.com/FThompson/Gamepads.js) - A module for tracking Gamepads and events pertaining to their usage.
+* [@ribajs/gamecontroller.js](https://github.com/PixelRPG/gamecontroller.js) - A powerful module for tracking Gamepads and events pertaining to their usage.
 * [webext-storage](https://github.com/fregante/webext-storage) - A typed, Promise-based storage API for WebExtensions with easy change listeners.
+* [WXT](https://wxt.dev/) - Next-gen framework for developing web extensions.
 * Xbox controller image courtesy of http://gamepadviewer.com/
 * Project icons courtesy of https://material.io/icons/ and https://iconfu.com.
 * Many thanks to [Tyler Sedlar](https://github.com/TSedlar) for creating pseudo:styler and for letting me bounce ideas off of him throughout development of this project.
@@ -78,7 +91,7 @@ Add Netflix Controller to your browser [here](https://chrome.google.com/webstore
 ## Changelog
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.0.7 | May 8, 2021 | WIP @jumplink. |
+| 2.0.0 | TBD 2025 | Major refactoring: Migrated to WXT framework and TypeScript, added automatic controller detection, expanded support to 14+ controller types (PS5, Xbox Series X\|S, Steam Deck, Steam Controller, Stadia, Luna, Ouya, Wii, Wii U), improved performance and code maintainability, added Firefox support. |
 | 1.0.6 | May 8, 2021 | Add Switch controller support by @matsumurae. |
 | 1.0.5 | October 25, 2020 | Updated the fullscreen action in the video player to remove the debugger popup message. |
 | 1.0.4 | July 25, 2020 | Fixed the title panel handler. |
