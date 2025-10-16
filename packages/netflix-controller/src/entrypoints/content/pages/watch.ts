@@ -1,6 +1,6 @@
+import { GAMEPAD_BUTTONS } from "@ribajs/gamecontroller.js";
 import type { NavigationAction } from "../../../types/components";
 import type { Settings } from "../../../types/settings";
-import { StandardMapping } from "../../../utils/gamepads.ts";
 import { InteractiveChoices } from "../components/choices.ts";
 import { ActionHandler } from "../ui/actions.js";
 import { BottomBar } from "../ui/bottom-bar.js";
@@ -34,22 +34,22 @@ export class WatchVideo extends NavigatablePage {
 		this.hasSkipIntro = false;
 		this.backAction = {
 			label: "Back",
-			index: StandardMapping.Button.BUTTON_RIGHT,
+			index: GAMEPAD_BUTTONS.BUTTON_RIGHT,
 			onPress: () => this.goBack(),
 		};
 		this.skipIntroAction = {
 			label: "Skip Intro",
-			index: StandardMapping.Button.BUTTON_CONTROL_RIGHT,
+			index: GAMEPAD_BUTTONS.BUTTON_CONTROL_RIGHT,
 			onPress: () => this.skipIntro(),
 		};
 		// this.previousEpisodeAction = {
 		//     label: 'Previous Episode',
-		//     index: StandardMapping.Button.BUMPER_LEFT,
+		//     index: GAMEPAD_BUTTONS.BUMPER_LEFT,
 		//     onPress: () => this.openPreviousEpisode()
 		// };
 		this.nextEpisodeAction = {
 			label: "Next Episode",
-			index: StandardMapping.Button.BUMPER_RIGHT,
+			index: GAMEPAD_BUTTONS.BUMPER_RIGHT,
 			onPress: () => this.openNextEpisode(),
 		};
 		this.actionHandler = new ActionHandler(storage as unknown as Settings);
@@ -338,38 +338,38 @@ export class WatchVideo extends NavigatablePage {
 		return [
 			{
 				label: "Play",
-				index: StandardMapping.Button.BUTTON_BOTTOM,
+				index: GAMEPAD_BUTTONS.BUTTON_BOTTOM,
 				onPress: () => this.dispatchKey(32),
 			},
 			{
 				label: "Mute",
-				index: StandardMapping.Button.BUTTON_LEFT,
+				index: GAMEPAD_BUTTONS.BUTTON_LEFT,
 				onPress: () => this.dispatchKey(77),
 			},
 			{
 				label: "Fullscreen",
-				index: StandardMapping.Button.BUTTON_TOP,
+				index: GAMEPAD_BUTTONS.BUTTON_TOP,
 				onPress: () => this.toggleFullscreen(),
 			},
 			this.backAction,
 			{
 				label: "Jump Back 10s",
-				index: StandardMapping.Button.D_PAD_LEFT,
+				index: GAMEPAD_BUTTONS.D_PAD_LEFT,
 				onPress: () => this.dispatchKey(37),
 			},
 			{
 				label: "Jump 10s",
-				index: StandardMapping.Button.D_PAD_RIGHT,
+				index: GAMEPAD_BUTTONS.D_PAD_RIGHT,
 				onPress: () => this.dispatchKey(39),
 			},
 			{
 				label: "Volume Up",
-				index: StandardMapping.Button.D_PAD_UP,
+				index: GAMEPAD_BUTTONS.D_PAD_UP,
 				onPress: () => this.dispatchKey(38),
 			},
 			{
 				label: "Volume Down",
-				index: StandardMapping.Button.D_PAD_BOTTOM,
+				index: GAMEPAD_BUTTONS.D_PAD_BOTTOM,
 				onPress: () => this.dispatchKey(40),
 			},
 		];

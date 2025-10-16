@@ -1,4 +1,4 @@
-import { StandardMapping } from "../../../utils/gamepads.ts";
+import { GAMEPAD_BUTTONS } from "@ribajs/gamecontroller.js";
 import { DIRECTION } from "../components/direction.ts";
 
 const SHIFT = "\u21e7";
@@ -156,7 +156,7 @@ export class VirtualKeyboard {
 		return [
 			{
 				label: "Space",
-				index: StandardMapping.Button.BUTTON_TOP,
+				index: GAMEPAD_BUTTONS.BUTTON_TOP,
 				onPress: () => {
 					this.insertSpace();
 					this.pressKey("space");
@@ -167,7 +167,7 @@ export class VirtualKeyboard {
 			},
 			{
 				label: "Insert",
-				index: StandardMapping.Button.BUTTON_BOTTOM,
+				index: GAMEPAD_BUTTONS.BUTTON_BOTTOM,
 				onPress: () => {
 					this.insert();
 					this.pressKey(this.selected);
@@ -178,7 +178,7 @@ export class VirtualKeyboard {
 			},
 			{
 				label: "Backspace",
-				index: StandardMapping.Button.BUTTON_RIGHT,
+				index: GAMEPAD_BUTTONS.BUTTON_RIGHT,
 				onPress: () => {
 					this.backspace();
 					this.pressKey(BACKSPACE);
@@ -189,7 +189,7 @@ export class VirtualKeyboard {
 			},
 			{
 				label: "Shift",
-				index: StandardMapping.Button.BUTTON_LEFT,
+				index: GAMEPAD_BUTTONS.BUTTON_LEFT,
 				onPress: () => {
 					this.toggleShift();
 					this.pressKey(SHIFT);
@@ -200,7 +200,7 @@ export class VirtualKeyboard {
 			},
 			{
 				label: "Close",
-				index: StandardMapping.Button.BUTTON_CONTROL_RIGHT,
+				index: GAMEPAD_BUTTONS.BUTTON_CONTROL_RIGHT,
 				onPress: () => {
 					this.close();
 					this.pressKey("close");
@@ -211,7 +211,7 @@ export class VirtualKeyboard {
 			},
 			{
 				label: "Clear",
-				index: StandardMapping.Button.BUTTON_CONTROL_LEFT,
+				index: GAMEPAD_BUTTONS.BUTTON_CONTROL_LEFT,
 				onPress: () => {
 					this.clear();
 				},

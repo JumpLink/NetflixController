@@ -1,7 +1,6 @@
+import gameControl from "@ribajs/gamecontroller.js";
 import type { GamepadState } from "../../types/gamepad";
-import { GamepadEventManager } from "../../utils/gamepad-events.ts";
 import { gamepadMappings } from "../../utils/gamepad-icons.ts";
-import { Gamepads } from "../../utils/gamepads.ts";
 import * as S from "../../utils/storage-items";
 
 let currentMapping = "Xbox One";
@@ -50,39 +49,106 @@ S.buttonImageMapping.onChanged((v) => {
 	}
 });
 
-Gamepads.addEventListener("connect", (e: unknown) => {
-	const event = e as { gamepad: GamepadState };
+gameControl.on("connect", (gamepad: GamepadState) => {
 	console.log("Gamepad connected:");
-	console.log(event.gamepad);
+	console.log(gamepad);
 	const countElement = document.getElementById("count");
 	if (countElement) {
 		countElement.textContent = (++count).toString();
 	}
 	updateCompatibility();
 
-	// Add button event listeners
-	GamepadEventManager.addButtonListeners(
-		event.gamepad,
-		(index: number) => showPressedButton(index),
-		(index: number) => removePressedButton(index),
-	);
+	// Add button event listeners for all buttons
+	for (let i = 0; i <= 16; i++) {
+		const buttonIndex = i;
+		gamepad.before(`button${buttonIndex}`, () =>
+			showPressedButton(buttonIndex),
+		);
+		gamepad.after(`button${buttonIndex}`, () =>
+			removePressedButton(buttonIndex),
+		);
+	}
 
-	// Add joystick event listeners
-	GamepadEventManager.addJoystickListener(event.gamepad, {
-		callback: (e) => moveJoystick(e.values, true),
-		isLeftJoystick: true,
+	// Add joystick event listeners - track the axis values for visualization
+	const leftJoystickValues = [0, 0];
+	const rightJoystickValues = [0, 0];
+
+	// Left joystick - track horizontal (axis 0)
+	gamepad.on("left0", () => {
+		leftJoystickValues[0] = -1;
+		moveJoystick(leftJoystickValues, true);
+	});
+	gamepad.on("right0", () => {
+		leftJoystickValues[0] = 1;
+		moveJoystick(leftJoystickValues, true);
+	});
+	// Left joystick - track vertical (axis 1)
+	gamepad.on("up0", () => {
+		leftJoystickValues[1] = -1;
+		moveJoystick(leftJoystickValues, true);
+	});
+	gamepad.on("down0", () => {
+		leftJoystickValues[1] = 1;
+		moveJoystick(leftJoystickValues, true);
 	});
 
-	GamepadEventManager.addJoystickListener(event.gamepad, {
-		callback: (e) => moveJoystick(e.values, false),
-		isLeftJoystick: false,
+	// Right joystick - track horizontal (axis 2)
+	gamepad.on("left1", () => {
+		rightJoystickValues[0] = -1;
+		moveJoystick(rightJoystickValues, false);
+	});
+	gamepad.on("right1", () => {
+		rightJoystickValues[0] = 1;
+		moveJoystick(rightJoystickValues, false);
+	});
+	// Right joystick - track vertical (axis 3)
+	gamepad.on("up1", () => {
+		rightJoystickValues[1] = -1;
+		moveJoystick(rightJoystickValues, false);
+	});
+	gamepad.on("down1", () => {
+		rightJoystickValues[1] = 1;
+		moveJoystick(rightJoystickValues, false);
+	});
+
+	// Reset joystick visualization when released
+	gamepad.after("up0", () => {
+		leftJoystickValues[1] = 0;
+		moveJoystick(leftJoystickValues, true);
+	});
+	gamepad.after("down0", () => {
+		leftJoystickValues[1] = 0;
+		moveJoystick(leftJoystickValues, true);
+	});
+	gamepad.after("left0", () => {
+		leftJoystickValues[0] = 0;
+		moveJoystick(leftJoystickValues, true);
+	});
+	gamepad.after("right0", () => {
+		leftJoystickValues[0] = 0;
+		moveJoystick(leftJoystickValues, true);
+	});
+	gamepad.after("up1", () => {
+		rightJoystickValues[1] = 0;
+		moveJoystick(rightJoystickValues, false);
+	});
+	gamepad.after("down1", () => {
+		rightJoystickValues[1] = 0;
+		moveJoystick(rightJoystickValues, false);
+	});
+	gamepad.after("left1", () => {
+		rightJoystickValues[0] = 0;
+		moveJoystick(rightJoystickValues, false);
+	});
+	gamepad.after("right1", () => {
+		rightJoystickValues[0] = 0;
+		moveJoystick(rightJoystickValues, false);
 	});
 });
 
-Gamepads.addEventListener("disconnect", (e: unknown) => {
-	const event = e as { gamepad: GamepadState };
+gameControl.on("disconnect", (index: number) => {
 	console.log("Gamepad disconnected:");
-	console.log(event.gamepad);
+	console.log(index);
 	const countElement = document.getElementById("count");
 	if (countElement) {
 		countElement.textContent = (--count).toString();
@@ -109,7 +175,7 @@ if (optionsElement) {
 moveJoystick([0, 0], true);
 moveJoystick([0, 0], false);
 gamepadMappings.buttonsPath = "/assets/buttons";
-Gamepads.start();
+// gameControl is automatically initialized, no need to call start()
 
 function showPressedButton(index: number) {
 	if (!pressedButtons[index]) {
@@ -151,7 +217,7 @@ function updateCompatibility() {
 	const warning = document.getElementById("no-standard-gamepad") as HTMLElement;
 	if (warning) {
 		if (
-			!Object.values(Gamepads.gamepads || {}).some(
+			!Object.values(gameControl.gamepads || {}).some(
 				(g: GamepadState) => g.mapping === "standard",
 			)
 		) {

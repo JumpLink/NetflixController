@@ -1,3 +1,4 @@
+import { GAMEPAD_BUTTONS } from "@ribajs/gamecontroller.js";
 import type {
 	EnterParams,
 	ExitResult,
@@ -6,7 +7,6 @@ import type {
 	NavigationAction,
 	StyleableComponent,
 } from "../../../types/components";
-import { StandardMapping } from "../../../utils/gamepads.ts";
 import { Navigatable } from "./navigatable.ts";
 
 // Import from content/index.ts - this would normally be a separate utility
@@ -83,7 +83,7 @@ export abstract class StaticNavigatable extends Navigatable {
 		return [
 			{
 				label: "Select",
-				index: StandardMapping.Button.BUTTON_BOTTOM,
+				index: GAMEPAD_BUTTONS.BUTTON_BOTTOM,
 				onPress: () => this.interact(this.getInteractionComponent()),
 			},
 		];

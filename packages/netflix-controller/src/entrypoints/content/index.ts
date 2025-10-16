@@ -1,10 +1,11 @@
+import gameControl, {
+	GAMEPAD_BUTTONS,
+	type GamepadState,
+} from "@ribajs/gamecontroller.js";
 import type { ExitResult, NavigationAction } from "../../types/components";
-import type { GamepadState } from "../../types/gamepad";
 import type { ContentScriptMessage } from "../../types/messages";
 import type { Settings } from "../../types/settings";
-import { GamepadEventManager } from "../../utils/gamepad-events.ts";
 import { gamepadMappings } from "../../utils/gamepad-icons.ts";
-import { Gamepads, StandardMapping } from "../../utils/gamepads.ts";
 import * as S from "../../utils/storage-items";
 
 // Import CSS - WXT will automatically add this to the manifest
@@ -77,13 +78,13 @@ export default defineContentScript({
 
 		const searchAction: NavigationAction = {
 			label: "Search",
-			index: StandardMapping.Button.BUTTON_TOP,
+			index: GAMEPAD_BUTTONS.BUTTON_TOP,
 			onPress: openSearch,
 		};
 
 		const backAction: NavigationAction = {
 			label: "Back",
-			index: StandardMapping.Button.BUTTON_RIGHT,
+			index: GAMEPAD_BUTTONS.BUTTON_RIGHT,
 			onPress: goBack,
 		};
 
@@ -140,9 +141,10 @@ export default defineContentScript({
 						runHandler(request.path);
 					}
 				} else if (request.message === "disableGamepadInput") {
-					Gamepads.stop();
+					// gameControl doesn't have a stop method, it's always running
+					// We can handle this differently if needed
 				} else if (request.message === "enableGamepadInput") {
-					Gamepads.start();
+					// gameControl is always running, no need to start
 				}
 			},
 		);
@@ -277,7 +279,7 @@ export default defineContentScript({
 		}
 
 		function isStandardGamepadConnected() {
-			return Object.values(Gamepads.gamepads || {}).some(
+			return Object.values(gameControl.gamepads || {}).some(
 				(g: GamepadState) => g.mapping === "standard",
 			);
 		}
@@ -292,20 +294,6 @@ export default defineContentScript({
 			console.log("Native gamepaddisconnected:", e.gamepad?.id, e);
 		});
 
-		// Some browsers require a user gesture before Gamepad API starts reporting.
-		function startOnGestureOnce() {
-			try {
-				Gamepads.start();
-				debugDumpGamepads("gesture-start");
-			} catch (e) {
-				console.warn("Failed to start gamepads on gesture:", e);
-			}
-		}
-		document.addEventListener("pointerdown", startOnGestureOnce, {
-			once: true,
-		});
-		document.addEventListener("keydown", startOnGestureOnce, { once: true });
-
 		// Temporary debug dump of navigator.getGamepads to verify visibility
 		function debugDumpGamepads(tag: string) {
 			try {
@@ -319,8 +307,83 @@ export default defineContentScript({
 		}
 		setTimeout(() => debugDumpGamepads("t+0.5s"), 500);
 		setTimeout(() => debugDumpGamepads("t+2s"), 2000);
-		Gamepads.addEventListener("connect", (e: unknown) => {
-			const event = e as { gamepad: GamepadState };
+
+		// Setup button event handlers for a gamepad
+		function setupButtonHandlers(gamepad: GamepadState) {
+			// Setup handlers for all possible buttons (0-16)
+			for (let i = 0; i <= 16; i++) {
+				const buttonIndex = i;
+				gamepad.before(`button${buttonIndex}`, () => {
+					try {
+						actionHandler.onButtonPress(buttonIndex);
+					} catch (error) {
+						showTempError(
+							error instanceof Error ? error : new Error(String(error)),
+						);
+					}
+				});
+				gamepad.after(`button${buttonIndex}`, () => {
+					try {
+						actionHandler.onButtonRelease(buttonIndex);
+					} catch (error) {
+						showTempError(
+							error instanceof Error ? error : new Error(String(error)),
+						);
+					}
+				});
+			}
+		}
+
+		// Setup joystick event handlers for a gamepad
+		function setupJoystickHandlers(gamepad: GamepadState) {
+			// Left joystick directional events - use .before() to fire only once per direction
+			gamepad.before("up0", () => {
+				try {
+					if (actionHandler.onDirection) {
+						actionHandler.onDirection(DIRECTION.UP);
+					}
+				} catch (error) {
+					showTempError(
+						error instanceof Error ? error : new Error(String(error)),
+					);
+				}
+			});
+			gamepad.before("down0", () => {
+				try {
+					if (actionHandler.onDirection) {
+						actionHandler.onDirection(DIRECTION.DOWN);
+					}
+				} catch (error) {
+					showTempError(
+						error instanceof Error ? error : new Error(String(error)),
+					);
+				}
+			});
+			gamepad.before("left0", () => {
+				try {
+					if (actionHandler.onDirection) {
+						actionHandler.onDirection(DIRECTION.LEFT);
+					}
+				} catch (error) {
+					showTempError(
+						error instanceof Error ? error : new Error(String(error)),
+					);
+				}
+			});
+			gamepad.before("right0", () => {
+				try {
+					if (actionHandler.onDirection) {
+						actionHandler.onDirection(DIRECTION.RIGHT);
+					}
+				} catch (error) {
+					showTempError(
+						error instanceof Error ? error : new Error(String(error)),
+					);
+				}
+			});
+		}
+
+		gameControl.on("connect", (gamepad: GamepadState) => {
 			if (!hasConnectedGamepad) {
 				// first connection, run current page handler manually
 				observeProfilePopup();
@@ -331,107 +394,22 @@ export default defineContentScript({
 			numGamepads++;
 			showActionHints();
 			updateCompatibility();
-			log(`Gamepad connected: ${event.gamepad.id || "Unknown"}`);
-			event.gamepad.addEventListener("buttonpress", (e: unknown) => {
-				try {
-					actionHandler.onButtonPress((e as { index: number }).index);
-				} catch (error) {
-					showTempError(
-						error instanceof Error ? error : new Error(String(error)),
-					);
-				}
-			});
-			event.gamepad.addEventListener("buttonrelease", (e: unknown) => {
-				try {
-					actionHandler.onButtonRelease((e as { index: number }).index);
-				} catch (error) {
-					showTempError(
-						error instanceof Error ? error : new Error(String(error)),
-					);
-				}
-			});
+			log(`Gamepad connected: ${gamepad.id || "Unknown"}`);
 
-			// Add joystick event listener for navigation
-			GamepadEventManager.addJoystickListener(event.gamepad, {
-				callback: (e) => {
-					const joystickEvent = e as unknown as {
-						gamepad: GamepadState;
-						horizontalIndex: number;
-						horizontalValue: number;
-						verticalIndex: number;
-						verticalValue: number;
-					};
-					try {
-						checkJoystickDirection(
-							joystickEvent.gamepad,
-							joystickEvent.horizontalIndex,
-							joystickEvent.horizontalValue,
-							DIRECTION.RIGHT,
-							DIRECTION.LEFT,
-						);
-						checkJoystickDirection(
-							joystickEvent.gamepad,
-							joystickEvent.verticalIndex,
-							joystickEvent.verticalValue,
-							DIRECTION.DOWN,
-							DIRECTION.UP,
-						);
-					} catch (error) {
-						showTempError(
-							error instanceof Error ? error : new Error(String(error)),
-						);
-					}
-				},
-				isLeftJoystick: true,
-			});
+			// Setup all event handlers for this gamepad
+			setupButtonHandlers(gamepad);
+			setupJoystickHandlers(gamepad);
 		});
-		Gamepads.addEventListener("disconnect", (e: unknown) => {
-			const event = e as { gamepad: GamepadState };
+
+		gameControl.on("disconnect", (index: number) => {
 			numGamepads--;
 			if (numGamepads === 0) {
 				actionHandler.hideHints();
 			}
 			showConnectionHint();
 			updateCompatibility();
-			log(`Gamepad disconnected: ${event.gamepad.id || "Unknown"}`);
+			log(`Gamepad disconnected: ${index}`);
 		});
-		Gamepads.start();
-
-		// TODO: rethink this messy code; integrate rate limited polling into gamepads.js?
-		const timeouts: Record<number, NodeJS.Timeout> = {};
-		const directions: Record<number, number> = {};
-
-		function checkJoystickDirection(
-			gamepad: GamepadState,
-			axis: number,
-			value: number,
-			pos: number,
-			neg: number,
-		) {
-			if (Math.abs(value) >= 1 - (gamepad.joystickDeadzone ?? 0.1)) {
-				const direction = value > 0 ? pos : neg;
-				if (!(axis in directions) || directions[axis] !== direction) {
-					directions[axis] = direction;
-					rateLimitJoystickDirection(axis, 500);
-				}
-			} else {
-				directions[axis] = -1;
-				if (axis in timeouts) {
-					clearTimeout(timeouts[axis]);
-					delete timeouts[axis];
-				}
-			}
-		}
-
-		function rateLimitJoystickDirection(axis: number, rateMillis: number) {
-			if (directions[axis] !== -1 && actionHandler.onDirection) {
-				actionHandler.onDirection(directions[axis]);
-				timeouts[axis] = setTimeout(
-					() => rateLimitJoystickDirection(axis, rateMillis),
-					rateMillis,
-				);
-			}
-		}
 
 		function openSearch() {
 			const searchButton = document.querySelector(".searchTab") as HTMLElement;

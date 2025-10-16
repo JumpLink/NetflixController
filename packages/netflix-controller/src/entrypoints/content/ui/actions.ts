@@ -1,16 +1,16 @@
+import { GAMEPAD_BUTTONS } from "@ribajs/gamecontroller.js";
 import type { PublicPath } from "wxt/browser";
 import type { NavigationAction } from "../../../types/components";
 import type { Settings } from "../../../types/settings";
 import { gamepadMappings } from "../../../utils/gamepad-icons.ts";
-import { StandardMapping } from "../../../utils/gamepads.ts";
 import { DIRECTION } from "../components/direction.ts";
 import { BottomBar } from "./bottom-bar.js";
 
 const DIRECTION_MAP: Record<number, number> = {
-	[StandardMapping.Button.D_PAD_UP]: DIRECTION.UP,
-	[StandardMapping.Button.D_PAD_BOTTOM]: DIRECTION.DOWN,
-	[StandardMapping.Button.D_PAD_LEFT]: DIRECTION.LEFT,
-	[StandardMapping.Button.D_PAD_RIGHT]: DIRECTION.RIGHT,
+	[GAMEPAD_BUTTONS.D_PAD_UP]: DIRECTION.UP,
+	[GAMEPAD_BUTTONS.D_PAD_BOTTOM]: DIRECTION.DOWN,
+	[GAMEPAD_BUTTONS.D_PAD_LEFT]: DIRECTION.LEFT,
+	[GAMEPAD_BUTTONS.D_PAD_RIGHT]: DIRECTION.RIGHT,
 };
 
 /**

@@ -1,3 +1,4 @@
+import { GAMEPAD_BUTTONS } from "@ribajs/gamecontroller.js";
 import type {
 	EnterParams,
 	ExitResult,
@@ -39,12 +40,12 @@ export class Jawbone extends TitlePanel {
 		// this.initTabs();
 		// this.nextTabAction = {
 		//     label: 'Next Tab',
-		//     index: StandardMapping.Button.BUMPER_RIGHT,
+		//     index: GAMEPAD_BUTTONS.BUMPER_RIGHT,
 		//     onPress: () => this.selectTab(false)
 		// };
 		// this.prevTabAction = {
 		//     label: 'Previous Tab',
-		//     index: StandardMapping.Button.BUMPER_LEFT,
+		//     index: GAMEPAD_BUTTONS.BUMPER_LEFT,
 		//     onPress: () => this.selectTab(true)
 		// }
 	}
@@ -99,7 +100,7 @@ export class Jawbone extends TitlePanel {
 		if (this.inline) {
 			actions.push({
 				label: "Close",
-				index: StandardMapping.Button.BUTTON_LEFT,
+				index: GAMEPAD_BUTTONS.BUTTON_LEFT,
 				onPress: () => this.close(),
 			});
 		}

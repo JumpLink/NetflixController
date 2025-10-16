@@ -1,3 +1,4 @@
+import { GAMEPAD_BUTTONS } from "@ribajs/gamecontroller.js";
 import type {
 	EnterParams,
 	ExitResult,
@@ -5,7 +6,6 @@ import type {
 	NavigationAction,
 } from "../../../types/components";
 import type { ActionHandler } from "../../../types/handlers";
-import { StandardMapping } from "../../../utils/gamepads.ts";
 import { Navigatable } from "./navigatable.ts";
 
 declare let actionHandler: ActionHandler;
@@ -36,7 +36,7 @@ export class Slider extends Navigatable {
 		this.sliderItem = null;
 		this.jawboneAction = {
 			label: "Expand",
-			index: StandardMapping.Button.BUTTON_LEFT,
+			index: GAMEPAD_BUTTONS.BUTTON_LEFT,
 			onPress: () => this.openJawbone(),
 		};
 
@@ -118,7 +118,7 @@ export class Slider extends Navigatable {
 		const actions: NavigationAction[] = [
 			{
 				label: "Play",
-				index: StandardMapping.Button.BUTTON_BOTTOM,
+				index: GAMEPAD_BUTTONS.BUTTON_BOTTOM,
 				onPress: () => {
 					this.clickHitzone(".previewModal--player_container");
 				},
