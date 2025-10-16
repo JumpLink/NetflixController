@@ -1,0 +1,3 @@
+[submodule "packages/gamecontroller.js"]
+	path = packages/gamecontroller.js
+	url = git@github.com:PixelRPG/gamecontroller.js.git

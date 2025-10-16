@@ -1,4 +1,4 @@
-import { BottomBar } from "./bottom-bar.js";
+import { BottomBar } from "./bottom-bar.ts";
 
 export class NoticeBar extends BottomBar {
 	constructor(notice, barClass, settingName) {

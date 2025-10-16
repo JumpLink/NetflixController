@@ -1,5 +1,5 @@
-import { StandardMapping } from "../../../utils/gamepads.js";
-import { DIRECTION } from "../components/direction.js";
+import { StandardMapping } from "../../../utils/gamepads.ts";
+import { DIRECTION } from "../components/direction.ts";
 
 const SHIFT = "\u21e7";
 const BACKSPACE = "\u232b";

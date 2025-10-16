@@ -1,8 +1,8 @@
 {
-	"name": "netflix-controller",
+	"name": "netflix-controller-workspace",
 	"private": true,
 	"version": "1.0.7",
-	"description": "Control Netflix in your browser with a gamepad or controller using this browser extension",
+	"description": "Netflix Controller Extension Workspace",
 	"keywords": [
 		"netflix",
 		"controller",
@@ -19,16 +19,22 @@
 	"license": "MIT",
 	"author": "Finn Thompson, Amanda Copete, Pascal Garber",
 	"type": "module",
-	"main": "dist/app/content/content.js",
 	"scripts": {
-		"dev": "wxt --mv3",
-		"dev:firefox": "wxt -b firefox --mv3",
-		"build": "wxt build --mv3",
-		"build:firefox": "wxt build -b firefox --mv3",
-		"zip": "wxt zip --mv3",
-		"zip:firefox": "wxt zip -b firefox --mv3",
-		"postinstall": "wxt prepare",
-		"check": "tsc --noEmit && biome check",
+		"dev": "pnpm --filter @netflix-controller/extension dev",
+		"dev:firefox": "pnpm --filter @netflix-controller/extension dev:firefox",
+		"build": "pnpm --filter @netflix-controller/extension build",
+		"build:firefox": "pnpm --filter @netflix-controller/extension build:firefox",
+		"zip": "pnpm --filter @netflix-controller/extension zip",
+		"zip:firefox": "pnpm --filter @netflix-controller/extension zip:firefox",
+		"check": "biome check && pnpm --filter @netflix-controller/extension check && pnpm --filter @ribajs/gamecontroller.js check",
 		"format": "biome check --write --unsafe"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.2.6"
+	},
+	"pnpm": {
+		"overrides": {
+			"@wxt-dev/browser": "^0.1.4"
+		}
 	}
 }
