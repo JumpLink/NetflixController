@@ -10,6 +10,14 @@ Control Netflix in your browser with a gamepad or controller using this Chrome e
 
 Add Netflix Controller to your browser [here](https://chrome.google.com/webstore/detail/netflix-controller/kjgfkjidgcfgbabbhjephchohcghcdkf), then open [Netflix](https://www.netflix.com/browse) and press a button on your controller to load the plugin.
 
+### Firefox Users
+For optimal functionality in Firefox, please enable autoplay for Netflix:
+1. Click the shield icon in the address bar while on Netflix
+2. Select "Disable Enhanced Tracking Protection for This Site" or allow autoplay permissions
+3. Alternatively, go to Firefox settings → Privacy & Security → Permissions → Autoplay and add netflix.com as an allowed site
+
+This ensures the extension can control video playback without interruptions.
+
 ## Features
 
 * Navigate Netflix using a controller

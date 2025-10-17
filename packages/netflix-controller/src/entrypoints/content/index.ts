@@ -2,6 +2,7 @@ import gameControl, {
 	GAMEPAD_BUTTONS,
 	type GamepadState,
 } from "@ribajs/gamecontroller.js";
+// injectScript is available globally in content scripts
 import type { ExitResult, NavigationAction } from "../../types/components";
 import type { ContentScriptMessage } from "../../types/messages";
 import type { Settings } from "../../types/settings";
@@ -290,6 +291,16 @@ export default defineContentScript({
 		}
 
 		log("Listening for gamepad connections.");
+
+		// Inject the main world Netflix API script for watch pages
+		injectScript("/netflix-main-world.js", {
+			keepInDom: true,
+		}).catch((error: unknown) => {
+			console.warn(
+				"[NETFLIX-CONTROLLER] Failed to inject main world script:",
+				error,
+			);
+		});
 
 		// Native gamepad events for diagnostics
 		window.addEventListener("gamepadconnected", (e: GamepadEvent) => {

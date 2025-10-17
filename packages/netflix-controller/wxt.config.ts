@@ -26,7 +26,11 @@ export default defineConfig({
 		},
 		web_accessible_resources: [
 			{
-				resources: ["assets/buttons/*/*.png", "assets/styles/content.css"],
+				resources: [
+					"assets/buttons/*/*.png",
+					"assets/styles/content.css",
+					"netflix-main-world.js",
+				],
 				matches: ["*://*.netflix.com/*"],
 			},
 		],

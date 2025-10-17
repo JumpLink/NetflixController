@@ -1,58 +1,50 @@
 import { GAMEPAD_BUTTONS } from "@ribajs/gamecontroller.js";
 import type { NavigationAction } from "../../../types/components";
 import type { Settings } from "../../../types/settings";
-import { InteractiveChoices } from "../components/choices.ts";
+import * as S from "../../../utils/storage-items";
 import { ActionHandler } from "../ui/actions.js";
-import { BottomBar } from "../ui/bottom-bar.js";
 import { NavigatablePage } from "./page.ts";
 
 export class WatchVideo extends NavigatablePage {
 	player: Element | null;
-	sizingWrapper: Element | null;
-	inactivityTimer: number | null;
-	postplay: boolean;
-	hasInteractiveChoices: boolean;
-	hasNextEpisode: boolean;
-	hasSkipIntro: boolean;
-	controlObserver!: MutationObserver;
-	skipObserver!: MutationObserver;
-	interactiveObserver!: MutationObserver;
-	backAction: NavigationAction;
-	skipIntroAction: NavigationAction;
-	nextEpisodeAction: NavigationAction;
 	actionHandler: ActionHandler;
+	settings: Settings;
 
 	constructor() {
 		super();
 		this.player = null;
-		this.sizingWrapper = null;
-		this.inactivityTimer = null;
-		this.postplay = false;
-		this.hasInteractiveChoices = false;
-		// this.hasPreviousEpisode = true;
-		this.hasNextEpisode = true;
-		this.hasSkipIntro = false;
-		this.backAction = {
-			label: "Back",
-			index: GAMEPAD_BUTTONS.BUTTON_RIGHT,
-			onPress: () => this.goBack(),
+		this.settings = {
+			showActionHints: true,
+			buttonImageMapping: "Xbox Series",
+			showConnectionHint: false,
+			showCompatibilityWarning: false,
 		};
-		this.skipIntroAction = {
-			label: "Skip Intro",
-			index: GAMEPAD_BUTTONS.BUTTON_CONTROL_RIGHT,
-			onPress: () => this.skipIntro(),
-		};
-		// this.previousEpisodeAction = {
-		//     label: 'Previous Episode',
-		//     index: GAMEPAD_BUTTONS.BUMPER_LEFT,
-		//     onPress: () => this.openPreviousEpisode()
-		// };
-		this.nextEpisodeAction = {
-			label: "Next Episode",
-			index: GAMEPAD_BUTTONS.BUMPER_RIGHT,
-			onPress: () => this.openNextEpisode(),
-		};
-		this.actionHandler = new ActionHandler(storage as unknown as Settings);
+		this.actionHandler = new ActionHandler(this.settings);
+
+		// Load settings from storage
+		this.loadSettingsFromStorage();
+
+		console.log("[WATCH] Netflix watch page handler initialized");
+	}
+
+	private async loadSettingsFromStorage(): Promise<void> {
+		try {
+			const [showActionHints, buttonImageMapping] = await Promise.all([
+				S.showActionHints.get(),
+				S.buttonImageMapping.get(),
+			]);
+
+			this.settings.showActionHints = showActionHints ?? true;
+			this.settings.buttonImageMapping = buttonImageMapping ?? "Xbox Series";
+
+			// Update action handler with loaded settings
+			this.actionHandler = new ActionHandler(this.settings);
+			this.actionHandler.addAll(this.getActions());
+
+			console.log("[WATCH] Settings loaded from storage:", this.settings);
+		} catch (error) {
+			console.warn("[WATCH] Failed to load settings from storage:", error);
+		}
 	}
 
 	static validatePath(path: string): boolean {
@@ -60,369 +52,263 @@ export class WatchVideo extends NavigatablePage {
 	}
 
 	onLoad(): void {
+		console.log("[WATCH] Netflix watch page loaded");
 		super.onLoad();
-		// The sizing wrapper is the fullscreen element if set via the player.
-		// We identify the sizing wrapper here to set the video to full screen.
-		this.sizingWrapper = document.querySelector(".sizing-wrapper");
-		this.player = this.sizingWrapper?.querySelector(".NFPlayer") || null;
-		if (this.player) {
-			this.showNextEpisode(
-				this.player.classList.contains("nextEpisodeSeamless"),
-			);
-		}
-		this.observePlayerState();
-		this.observeSkipIntro();
-		this.observeInteractiveChoices();
-		this.setActivityTimer();
+
+		// Find player element for keyboard fallback
+		this.player = document.querySelector('[data-uia="player"]') || null;
+
+		console.log("[WATCH] Player element found:", !!this.player);
 	}
 
 	onUnload(): void {
-		if (this.controlObserver) this.controlObserver.disconnect();
-		if (this.skipObserver) this.skipObserver.disconnect();
-		if (this.interactiveObserver) this.interactiveObserver.disconnect();
-		if (this.inactivityTimer) {
-			clearTimeout(this.inactivityTimer);
-		}
-		BottomBar.container.show();
+		this.actionHandler.removeAll(this.getActions());
 		super.onUnload();
+		console.log("[WATCH] Netflix watch page unloaded");
 	}
 
 	isPageReady(): boolean {
-		return document.querySelector(".NFPlayer") !== null;
-	}
+		const hasVideo = document.querySelector("video") !== null;
+		const isWatchPage = window.location.pathname.includes("/watch");
 
-	observePlayerState(): void {
-		this.controlObserver = new MutationObserver(
-			(mutations: MutationRecord[]) => {
-				for (const mutation of mutations) {
-					this.hideControls(
-						(mutation.target as Element).classList.contains("inactive"),
-					);
-					this.showNextEpisode(
-						(mutation.target as Element).classList.contains(
-							"nextEpisodeSeamless",
-						),
-					);
-				}
-			},
-		);
-		if (this.player) {
-			this.controlObserver.observe(this.player, {
-				attributes: true,
-				attributeFilter: ["class"],
-			});
-		}
-	}
+		const isReady = isWatchPage && hasVideo;
 
-	observeSkipIntro(): void {
-		const controls = this.player?.querySelector(".PlayerControlsNeo__layout");
-		if (controls) {
-			this.checkForElementWithClass(
-				controls.childNodes,
-				true,
-				"skip-credits",
-				() => this.showSkipIntro(true),
-			);
-			this.skipObserver = this.watchForElementsWithClass(
-				controls,
-				false,
-				"skip-credits",
-				(found: boolean) => this.showSkipIntro(found),
-			);
-		}
-	}
-
-	observeInteractiveChoices(): void {
-		const controls = this.player?.querySelector(
-			".PlayerControlsNeo__all-controls",
-		);
-		if (controls) {
-			this.interactiveObserver = new MutationObserver(
-				(mutations: MutationRecord[]) => {
-					for (const mutation of mutations) {
-						this.checkForElementMatchingSelector(
-							mutation.addedNodes,
-							true,
-							".BranchingInteractiveScene--wrapper",
-							() => this.setInteractiveMode(true),
-						);
-						this.checkForElementMatchingSelector(
-							mutation.removedNodes,
-							false,
-							".BranchingInteractiveScene--wrapper",
-							() => this.setInteractiveMode(false),
-						);
-						this.checkForElementMatchingSelector(
-							mutation.addedNodes,
-							true,
-							".SeamlessControls--container",
-							() => this.setPostPlay(true),
-						);
-						this.checkForElementMatchingSelector(
-							mutation.removedNodes,
-							false,
-							".SeamlessControls--container",
-							() => this.setPostPlay(false),
-						);
-					}
-				},
-			);
-			this.interactiveObserver.observe(controls, { childList: true });
-		}
-	}
-
-	watchForElementsWithClass(
-		node: Element,
-		subtree: boolean,
-		className: string,
-		callback: (found: boolean) => void,
-	): MutationObserver {
-		const observer = new MutationObserver((mutations: MutationRecord[]) => {
-			for (const mutation of mutations) {
-				this.checkForElementWithClass(
-					mutation.addedNodes,
-					true,
-					className,
-					callback,
-				);
-				this.checkForElementWithClass(
-					mutation.removedNodes,
-					false,
-					className,
-					callback,
-				);
-			}
+		console.log("[WATCH] Page ready check:", {
+			hasVideo,
+			isWatchPage,
+			isReady,
 		});
-		observer.observe(node, { childList: true, subtree });
-		return observer;
+
+		return isReady;
 	}
 
-	checkForElementWithClass(
-		nodeList: NodeList,
-		isAddedList: boolean,
-		className: string,
-		callback: (added: boolean) => void,
-	): void {
-		for (const node of Array.from(nodeList)) {
-			if (
-				node.nodeType === 1 &&
-				(node as Element).classList.contains(className)
-			) {
-				callback(isAddedList);
-				return;
-			}
-		}
-	}
-
-	checkForElementMatchingSelector(
-		nodeList: NodeList,
-		isAddedList: boolean,
-		selector: string,
-		callback: (added: boolean) => void,
-	): void {
-		for (const node of Array.from(nodeList)) {
-			if (node.nodeType === 1 && (node as Element).querySelector(selector)) {
-				callback(isAddedList);
-				return;
-			}
-		}
-	}
-
-	showSkipIntro(canSkip: boolean): void {
-		this.hasSkipIntro = canSkip;
-		if (canSkip) {
-			this.actionHandler.addAction(this.skipIntroAction);
-		} else {
-			this.actionHandler.removeAction(this.skipIntroAction);
-		}
-	}
-
-	setPostPlay(postplay: boolean): void {
-		if (postplay) {
-			this.actionHandler.removeAll(this.getActions());
-			// this.actionHandler.addAction(this.previousEpisodeAction);
-			this.actionHandler.addAction(this.nextEpisodeAction);
-			this.actionHandler.addAction(this.backAction);
-			this.setActivityTimer();
-			this.postplay = true;
-		} else {
-			this.postplay = false;
-			// this.actionHandler.removeAction(this.previousEpisodeAction);
-			this.actionHandler.removeAction(this.nextEpisodeAction);
-			this.actionHandler.removeAction(this.backAction);
-			this.actionHandler.addAll(this.getActions());
-		}
-	}
-
-	setInteractiveMode(interactive: boolean): void {
-		if (interactive) {
-			this.actionHandler.removeAll(this.getActions());
-			this.addNavigatable(
-				0,
-				new InteractiveChoices(this.dispatchKey.bind(this)),
-			);
-			this.setNavigatable(0);
-			this.setActivityTimer();
-			this.hasInteractiveChoices = true;
-		} else {
-			this.hasInteractiveChoices = false;
-			this.actionHandler.addAll(this.getActions());
-			this.removeNavigatable(0);
-		}
-	}
-
-	hideControls(inactive: boolean): void {
-		if (inactive) {
-			BottomBar.container.hide();
-		} else {
-			BottomBar.container.show();
-		}
-	}
-
-	// showPreviousEpisode(visible) {
-	//     this.hasPreviousEpisode = visible;
-	//     if (visible) {
-	//         this.actionHandler.addAction(this.previousEpisodeAction);
-	//     } else {
-	//         this.actionHandler.removeAction(this.previousEpisodeAction);
-	//     }
-	// }
-
-	showNextEpisode(visible: boolean): void {
-		this.hasNextEpisode = visible;
-		if (visible) {
-			this.actionHandler.addAction(this.nextEpisodeAction);
-		} else {
-			this.actionHandler.removeAction(this.nextEpisodeAction);
-		}
-	}
-
-	setActivityTimer() {
-		if (this.inactivityTimer) {
-			clearTimeout(this.inactivityTimer);
-		}
-		this.hideControls(false);
-		this.inactivityTimer = window.setTimeout(() => {
-			if (this.hasInteractiveChoices) {
-				// keep the controls visible while choices are present
-				this.setActivityTimer();
-			} else {
-				this.hideControls(true);
-				this.inactivityTimer = null;
-			}
-		}, 5000);
-	}
-
-	onInput() {
-		this.setActivityTimer();
-	}
-
-	getActions() {
-		if (this.hasInteractiveChoices) {
-			return [];
-		}
-		const actions = this.getDefaultActions();
-		// if (this.hasPreviousEpisode) {
-		//     actions.push(this.previousEpisodeAction);
-		// }
-		if (this.hasNextEpisode) {
-			actions.push(this.nextEpisodeAction);
-		}
-		if (this.hasSkipIntro) {
-			actions.push(this.skipIntroAction);
-		}
-		return actions;
-	}
-
-	getDefaultActions() {
+	getActions(): NavigationAction[] {
+		console.log("[WATCH] getActions called");
 		return [
 			{
-				label: "Play",
+				label: "Play/Pause",
 				index: GAMEPAD_BUTTONS.BUTTON_BOTTOM,
-				onPress: () => this.dispatchKey(32),
+				onPress: () => this.togglePlayPause(),
 			},
 			{
 				label: "Mute",
 				index: GAMEPAD_BUTTONS.BUTTON_LEFT,
-				onPress: () => this.dispatchKey(77),
+				onPress: () => this.toggleMute(),
 			},
 			{
 				label: "Fullscreen",
 				index: GAMEPAD_BUTTONS.BUTTON_TOP,
 				onPress: () => this.toggleFullscreen(),
 			},
-			this.backAction,
 			{
-				label: "Jump Back 10s",
+				label: "Back",
+				index: GAMEPAD_BUTTONS.BUTTON_RIGHT,
+				onPress: () => this.goBack(),
+			},
+			{
+				label: "Seek Back 10s",
 				index: GAMEPAD_BUTTONS.D_PAD_LEFT,
-				onPress: () => this.dispatchKey(37),
+				onPress: () => this.seekBackward(10),
 			},
 			{
-				label: "Jump 10s",
+				label: "Seek Forward 10s",
 				index: GAMEPAD_BUTTONS.D_PAD_RIGHT,
-				onPress: () => this.dispatchKey(39),
-			},
-			{
-				label: "Volume Up",
-				index: GAMEPAD_BUTTONS.D_PAD_UP,
-				onPress: () => this.dispatchKey(38),
+				onPress: () => this.seekForward(10),
 			},
 			{
 				label: "Volume Down",
 				index: GAMEPAD_BUTTONS.D_PAD_BOTTOM,
-				onPress: () => this.dispatchKey(40),
+				onPress: () => this.volumeDown(),
+			},
+			{
+				label: "Volume Up",
+				index: GAMEPAD_BUTTONS.D_PAD_UP,
+				onPress: () => this.volumeUp(),
 			},
 		];
 	}
 
-	onDirectionAction(direction: number): void {
-		// override default direction navigation to do nothing unless interactive
-		if (this.hasInteractiveChoices) {
-			super.onDirectionAction(direction);
+	// ===== PLAYER CONTROL METHODS =====
+	// Primary: Netflix API via message bridge
+	// Fallback: Keyboard events on player element
+
+	async togglePlayPause(): Promise<void> {
+		console.log("[WATCH] Executing togglePlayPause");
+
+		try {
+			// Get initial status
+			const initialStatus = await this.sendNetflixCommand("getPlaybackStatus");
+			const wasPaused = initialStatus?.isPaused;
+			console.log("[WATCH] Initial playback status:", { wasPaused });
+
+			// Send toggle command
+			const toggleResult = await this.sendNetflixCommand("togglePlayPause");
+
+			if (toggleResult?.success) {
+				// Wait a bit for the change to take effect, then verify
+				setTimeout(async () => {
+					try {
+						const finalStatus =
+							await this.sendNetflixCommand("getPlaybackStatus");
+						const isNowPaused = finalStatus?.isPaused;
+
+						if (isNowPaused !== wasPaused) {
+							console.log(
+								"[WATCH] Netflix API togglePlayPause successful - status changed from",
+								wasPaused,
+								"to",
+								isNowPaused,
+							);
+						} else {
+							console.log(
+								"[WATCH] Netflix API togglePlayPause failed - status didn't change, using keyboard fallback",
+							);
+							this.dispatchKey(32); // Space key
+						}
+					} catch {
+						console.log(
+							"[WATCH] Could not verify status change, assuming API worked",
+						);
+					}
+				}, 100); // Small delay to let the API call take effect
+			} else {
+				console.log("[WATCH] Netflix API failed, using keyboard fallback");
+				this.dispatchKey(32); // Space key
+			}
+		} catch (error) {
+			console.warn(
+				"[WATCH] Could not get initial status, using keyboard fallback:",
+				error,
+			);
+			this.dispatchKey(32); // Space key
 		}
 	}
 
-	setNavigatable(position: number): void {
-		if (position === 0) {
-			super.setNavigatable(position);
+	async toggleMute(): Promise<void> {
+		console.log("[WATCH] Executing toggleMute");
+
+		try {
+			const result = await this.sendNetflixCommand("toggleMute");
+			if (result?.success) {
+				console.log("[WATCH] Netflix API toggleMute successful");
+			} else {
+				console.log("[WATCH] Netflix API failed, using keyboard fallback");
+				this.dispatchKey(77); // M key
+			}
+		} catch (error) {
+			console.warn(
+				"[WATCH] Message bridge failed, using keyboard fallback:",
+				error,
+			);
+			this.dispatchKey(77); // M key
 		}
 	}
 
-	// openPreviousEpisode() {
-	//     this.clickControl('.button-nfplayerEpisodes', 'nfp-episode-expander [data-uia-is-expanded="true"]');
-	// }
+	async seekForward(seconds: number = 10): Promise<void> {
+		console.log("[WATCH] Executing seekForward");
 
-	openNextEpisode() {
-		this.clickControl(
-			".button-nfplayerNextEpisode",
-			'button[data-uia="next-episode-seamless-button"]',
-		);
-		//below only works once player is "ended" class
-		//control.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-	}
-
-	skipIntro() {
-		this.clickControl(".skip-credits > a");
-	}
-
-	goBack() {
-		this.clickControl(".button-nfplayerBack", ".BackToBrowse");
-	}
-
-	clickControl(playerSelector: string, postplaySelector?: string): void {
-		let control = null;
-		if (this.postplay && postplaySelector) {
-			control = document.querySelector(postplaySelector);
-		} else if (this.player) {
-			control = this.player.querySelector(playerSelector);
-		}
-		if (control) {
-			(control as HTMLElement).click();
+		try {
+			const result = await this.sendNetflixCommand("seekForward", seconds);
+			if (result?.success) {
+				console.log("[WATCH] Netflix API seekForward successful");
+			} else {
+				console.log("[WATCH] Netflix API failed, using keyboard fallback");
+				this.dispatchKey(39); // Right arrow
+			}
+		} catch (error) {
+			console.warn(
+				"[WATCH] Message bridge failed, using keyboard fallback:",
+				error,
+			);
+			this.dispatchKey(39); // Right arrow
 		}
 	}
 
-	dispatchKey(keyCode: number, isKeyDown: boolean = true): void {
-		const event = new KeyboardEvent(isKeyDown ? "keydown" : "keyup", {
+	async seekBackward(seconds: number = 10): Promise<void> {
+		console.log("[WATCH] Executing seekBackward");
+
+		try {
+			const result = await this.sendNetflixCommand("seekBackward", seconds);
+			if (result?.success) {
+				console.log("[WATCH] Netflix API seekBackward successful");
+			} else {
+				console.log("[WATCH] Netflix API failed, using keyboard fallback");
+				this.dispatchKey(37); // Left arrow
+			}
+		} catch (error) {
+			console.warn(
+				"[WATCH] Message bridge failed, using keyboard fallback:",
+				error,
+			);
+			this.dispatchKey(37); // Left arrow
+		}
+	}
+
+	async volumeUp(delta: number = 0.1): Promise<void> {
+		console.log("[WATCH] Executing volumeUp");
+
+		try {
+			const result = await this.sendNetflixCommand("volumeUp", delta);
+			if (result?.success) {
+				console.log("[WATCH] Netflix API volumeUp successful");
+			} else {
+				console.log("[WATCH] Netflix API failed, using keyboard fallback");
+				this.dispatchKey(38); // Up arrow
+			}
+		} catch (error) {
+			console.warn(
+				"[WATCH] Message bridge failed, using keyboard fallback:",
+				error,
+			);
+			this.dispatchKey(38); // Up arrow
+		}
+	}
+
+	async volumeDown(delta: number = 0.1): Promise<void> {
+		console.log("[WATCH] Executing volumeDown");
+
+		try {
+			const result = await this.sendNetflixCommand("volumeDown", delta);
+			if (result?.success) {
+				console.log("[WATCH] Netflix API volumeDown successful");
+			} else {
+				console.log("[WATCH] Netflix API failed, using keyboard fallback");
+				this.dispatchKey(40); // Down arrow
+			}
+		} catch (error) {
+			console.warn(
+				"[WATCH] Message bridge failed, using keyboard fallback:",
+				error,
+			);
+			this.dispatchKey(40); // Down arrow
+		}
+	}
+
+	toggleFullscreen(): void {
+		// Try to find the fullscreen element
+		const fullscreenElement =
+			document.querySelector('[data-uia="player"]') || document.body;
+
+		// Toggle fullscreen
+		if (!document.fullscreenElement && fullscreenElement) {
+			fullscreenElement.requestFullscreen().catch((err) => {
+				console.warn(`Unable to switch to fullscreen mode: ${err}`);
+			});
+		} else {
+			document.exitFullscreen().catch((err) => {
+				console.warn(`Unable to exit fullscreen mode: ${err}`);
+			});
+		}
+	}
+
+	goBack(): void {
+		console.log("[WATCH] Going back using browser history");
+		// Simple back navigation using browser history
+		window.history.back();
+	}
+
+	dispatchKey(keyCode: number): void {
+		const event = new KeyboardEvent("keydown", {
 			key: String.fromCharCode(keyCode),
 			keyCode: keyCode,
 			bubbles: true,
@@ -434,17 +320,44 @@ export class WatchVideo extends NavigatablePage {
 		}
 	}
 
-	toggleFullscreen(): void {
-		// For now, ignore the errors thrown by these functions.
-		// We likely want a warning-type temporary error bar eventually.
-		if (!document.fullscreenElement && this.sizingWrapper) {
-			this.sizingWrapper.requestFullscreen().catch((err) => {
-				console.warn(`Unable to switch to fullscreen mode: ${err}`);
-			});
-		} else {
-			document.exitFullscreen().catch((err) => {
-				console.warn(`Unable to exit fullscreen mode: ${err}`);
-			});
-		}
+	// ===== MESSAGE BRIDGE =====
+
+	sendNetflixCommand(
+		command: string,
+		...args: unknown[]
+	): Promise<Record<string, unknown>> {
+		return new Promise((resolve) => {
+			const requestId = Date.now() + Math.random();
+
+			// Listen for response
+			const responseHandler = (event: MessageEvent) => {
+				if (
+					event.data?.type === "netflix-controller-response" &&
+					event.data.requestId === requestId
+				) {
+					window.removeEventListener("message", responseHandler);
+					resolve(event.data.result);
+				}
+			};
+
+			window.addEventListener("message", responseHandler);
+
+			// Send command to main world
+			window.postMessage(
+				{
+					type: "netflix-controller-command",
+					command,
+					args,
+					requestId,
+				},
+				"*",
+			);
+
+			// Timeout after 5 seconds
+			setTimeout(() => {
+				window.removeEventListener("message", responseHandler);
+				resolve({ success: false, error: "Timeout" });
+			}, 5000);
+		});
 	}
 }
