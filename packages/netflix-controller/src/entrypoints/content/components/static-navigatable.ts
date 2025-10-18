@@ -69,6 +69,14 @@ export abstract class StaticNavigatable extends Navigatable {
 		}
 	}
 
+	up(): void {
+		// Base implementation does nothing - should be overridden by grid layouts
+	}
+
+	down(): void {
+		// Base implementation does nothing - should be overridden by grid layouts
+	}
+
 	enter(_params?: EnterParams): void {
 		this.select(0);
 	}
@@ -95,6 +103,14 @@ export abstract class StaticNavigatable extends Navigatable {
 			this.style(component, false);
 			component.style.outline = "0";
 		}
+	}
+
+	/**
+	 * Clean up any resources (event listeners, etc.) when this navigatable is no longer needed
+	 * Override in subclasses if needed
+	 */
+	cleanup(): void {
+		// Base implementation does nothing
 	}
 
 	select(position: number): void {

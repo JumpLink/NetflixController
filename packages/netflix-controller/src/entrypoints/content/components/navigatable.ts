@@ -23,9 +23,17 @@ export abstract class Navigatable {
 
 	abstract right(): void;
 
+	abstract up(): void;
+
+	abstract down(): void;
+
 	abstract enter(params?: EnterParams): void;
 
 	abstract exit(): ExitResult;
+
+	cleanup(): void {
+		// Base implementation does nothing
+	}
 
 	getActions(): NavigationAction[] {
 		return [];

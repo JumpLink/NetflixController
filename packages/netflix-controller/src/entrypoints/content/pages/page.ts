@@ -69,7 +69,13 @@ export class NavigatablePage {
 	// to be overriden by subclasses
 	onUnload(): void {
 		this.navigatables.forEach((navigatable) => {
+			// Call exit to handle component state cleanup
 			navigatable?.exit();
+
+			// Call cleanup if it's a Navigatable to handle resource cleanup
+			if (navigatable && typeof navigatable.cleanup === "function") {
+				navigatable.cleanup();
+			}
 		});
 		window.actionHandler.removeAll(this.getActions());
 		window.actionHandler.onInput = null;
@@ -166,11 +172,21 @@ export class NavigatablePage {
 
 	onDirectionAction(direction: number): void {
 		if (direction === DIRECTION.UP) {
-			if (this.position > 0) {
+			// If there's a navigatable and it handles up navigation internally
+			if (this.navigatables[this.position]) {
+				this.navigatables[this.position]?.up();
+			} else if (this.position > 0) {
+				// Fall back to previous navigatable if current one doesn't handle up
 				this.setNavigatable(this.position - 1);
 			}
 		} else if (direction === DIRECTION.DOWN) {
-			this.setNavigatable(this.position + 1);
+			// If there's a navigatable and it handles down navigation internally
+			if (this.navigatables[this.position]) {
+				this.navigatables[this.position]?.down();
+			} else {
+				// Fall back to next navigatable if current one doesn't handle down
+				this.setNavigatable(this.position + 1);
+			}
 		} else if (direction === DIRECTION.LEFT) {
 			this.navigatables[this.position]?.left();
 		} else if (direction === DIRECTION.RIGHT) {

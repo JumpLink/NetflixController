@@ -317,4 +317,22 @@ export class Slider extends Navigatable {
 		}
 		this.canShiftLeft = true;
 	}
+
+	/**
+	 * Move up to the previous row's slider
+	 * This is handled by the NavigatablePage's onDirectionAction
+	 */
+	up(): void {
+		// Navigation between rows is handled by the Page class
+		// This is a no-op at the slider level
+	}
+
+	/**
+	 * Move down to the next row's slider
+	 * This is handled by the NavigatablePage's onDirectionAction
+	 */
+	down(): void {
+		// Navigation between rows is handled by the Page class
+		// This is a no-op at the slider level
+	}
 }

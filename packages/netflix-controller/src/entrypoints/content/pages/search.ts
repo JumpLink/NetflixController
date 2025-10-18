@@ -1,6 +1,14 @@
 import { SearchGallery } from "../components/search-gallery.ts";
 import { NavigatablePage } from "./page.ts";
 
+/**
+ * Column breaks:
+ * * 0 - 599 px: 2 columns
+ * * 600 - 959 px: 3 columns
+ * * 960 - 1279 px: 4 columns
+ * * 1280 - 1919 px: 5 columns
+ * * 1920 - Infinity px: 6 columns
+ */
 export class SearchBrowse extends NavigatablePage {
 	loaded: boolean;
 	observer!: MutationObserver | null;
