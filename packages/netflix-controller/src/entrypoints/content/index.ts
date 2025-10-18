@@ -25,6 +25,8 @@ import type { NavigatablePage } from "./pages/page";
 import { SearchBrowse } from "./pages/search.js";
 import { TitleBrowse } from "./pages/title-browse.js";
 import { WatchVideo } from "./pages/watch.js";
+// Modal detection
+import { ModalDetector } from "./services/modal-detector.ts";
 // UI components
 import { ActionHandler } from "./ui/actions.js";
 import { CompatibilityWarningBar as CompatibilityWarningBarImpl } from "./ui/compatibility-warning.js";
@@ -132,6 +134,344 @@ export default defineContentScript({
 			updateCompatibility();
 		});
 
+		// Initialize modal detector
+		const modalDetector = ModalDetector.getInstance();
+
+		// Register callback for modal state changes
+		modalDetector.onModalStateChange((isOpen, modalId) => {
+			log(`Modal state changed: ${isOpen ? "open" : "closed"}, ID: ${modalId}`);
+
+			if (isOpen) {
+				// Modal opened
+				handleModalOpen();
+			} else {
+				// Modal closed
+				handleModalClose();
+			}
+		});
+
+		/**
+		 * Handle modal open event
+		 */
+		function handleModalOpen() {
+			if (!currentHandler) {
+				console.log("No current handler when modal opened");
+				return;
+			}
+
+			console.log(
+				"Modal opened - saving page state and setting up modal navigation",
+			);
+
+			try {
+				// Save current page state for later restoration
+				const currentPath = window.location.pathname;
+				const currentPosition = currentHandler.position;
+				const currentNavigatableType =
+					currentHandler.navigatables[currentPosition]?.constructor.name ||
+					"unknown";
+
+				// Store page state in the modal detector
+				modalDetector.savePageState(
+					currentPath,
+					currentPosition,
+					currentNavigatableType,
+				);
+
+				// Exit current navigatable to pause navigation
+				currentHandler.exit();
+
+				// Get the modal container
+				const modalContainer = modalDetector.getModalContainer();
+				if (!modalContainer) {
+					console.log("No modal container available");
+					return;
+				}
+
+				// Clear any existing modal navigatables to prevent duplicates
+				// Check for 'modal' property instead of constructor.name (works with minified code)
+				for (let i = 0; i < currentHandler.navigatables.length; i++) {
+					const nav = currentHandler.navigatables[i];
+					if (nav && "modal" in nav && "navigatables" in nav) {
+						// ModalContainer has both 'modal' and 'navigatables' properties
+						console.log("Removing existing modal container");
+						currentHandler.removeNavigatable(i);
+						break;
+					}
+				}
+
+				// Add modal container as a temporary navigatable at position 0
+				console.log("Adding modal container as navigatable at position 0");
+				currentHandler.addNavigatable(0, modalContainer);
+
+				// Set focus to the modal
+				console.log("Setting focus to modal");
+				currentHandler.setNavigatable(0);
+
+				// Update actions for modal navigation
+				actionHandler.removeAction(searchAction);
+			} catch (error) {
+				console.error("Error during modal open:", error);
+			}
+		}
+
+		/**
+		 * Handle modal close event
+		 */
+		function handleModalClose() {
+			if (!currentHandler) {
+				console.log("No current handler when modal closed");
+				return;
+			}
+
+			console.log("Modal closed - restoring page navigation");
+
+			try {
+				// Find and remove modal container from navigatables
+				// Use property check instead of reference comparison since the modal might be cleaned up
+				let modalIndex = -1;
+				for (let i = 0; i < currentHandler.navigatables.length; i++) {
+					const nav = currentHandler.navigatables[i];
+					// Check for ModalContainer properties (modal + navigatables)
+					if (nav && "modal" in nav && "navigatables" in nav) {
+						modalIndex = i;
+						console.log(`Found modal container at position ${i}`);
+						break;
+					}
+				}
+
+				if (modalIndex >= 0) {
+					console.log(
+						`Removing modal from position ${modalIndex}, current position: ${currentHandler.position}`,
+					);
+
+					// Exit the modal first if it's the current navigatable
+					if (currentHandler.position === modalIndex) {
+						console.log("Exiting modal");
+						currentHandler.exit();
+					}
+
+					// Remove the modal navigatable
+					console.log(
+						`Before removal: navigatables.length = ${currentHandler.navigatables.length}`,
+					);
+					currentHandler.removeNavigatable(modalIndex);
+					console.log(
+						`After removal: navigatables.length = ${currentHandler.navigatables.length}`,
+					);
+
+					// Adjust position if needed
+					if (currentHandler.position > modalIndex) {
+						const oldPosition = currentHandler.position;
+						currentHandler.position = currentHandler.position - 1;
+						console.log(
+							`Adjusted position from ${oldPosition} to ${currentHandler.position}`,
+						);
+					} else if (currentHandler.position === modalIndex) {
+						// We were on the modal, move to position 0
+						currentHandler.position = 0;
+						console.log("Was on modal, reset position to 0");
+					}
+				} else {
+					console.log("No modal container found in navigatables");
+				}
+
+				// Get the saved page state
+				const savedState = modalDetector.getSavedPageState();
+
+				// Determine if we need to reload the page handler
+				const currentPath = window.location.pathname;
+				const needsReload = savedState && savedState.path !== currentPath;
+
+				if (needsReload) {
+					console.log(
+						`Path changed from ${savedState?.path} to ${currentPath}, reloading handler`,
+					);
+					// Path changed, reload the page handler
+					runHandler(currentPath, true);
+				} else {
+					// Path is the same, restore navigation position
+					restorePageNavigation(savedState);
+				}
+
+				// Clear the saved state
+				modalDetector.clearSavedPageState();
+			} catch (error) {
+				console.error("Error during modal close:", error);
+
+				// Emergency recovery - try to reload the current page handler
+				try {
+					runHandler(window.location.pathname, true);
+				} catch (innerError) {
+					console.error("Failed emergency recovery:", innerError);
+				}
+			}
+
+			// Restore page actions
+			setPageActions();
+		}
+
+		/**
+		 * Restore page navigation based on saved state
+		 */
+		function restorePageNavigation(
+			savedState: {
+				path: string;
+				position: number;
+				navigatableType: string;
+			} | null,
+		) {
+			if (!currentHandler) return;
+
+			try {
+				console.log("Restoring page navigation");
+
+				// First, determine what type of page we're on
+				const path = window.location.pathname;
+				console.log(`Current path: ${path}`);
+
+				if (path.includes("/search")) {
+					console.log("Restoring search page navigation");
+					restoreSearchPageNavigation();
+				} else if (path.includes("/browse")) {
+					console.log("Restoring browse page navigation");
+					restoreBrowsePageNavigation(savedState);
+				} else {
+					console.log("Restoring generic page navigation");
+					restoreGenericPageNavigation(savedState);
+				}
+			} catch (error) {
+				console.error("Error restoring page navigation:", error);
+			}
+		}
+
+		/**
+		 * Restore search page navigation
+		 */
+		function restoreSearchPageNavigation() {
+			if (!currentHandler || !currentHandler.navigatables.length) return;
+
+			// Find the search gallery component
+			// Check for 'columnCount' property instead of constructor.name (works with minified code)
+			let searchGalleryIndex = -1;
+			for (let i = 0; i < currentHandler.navigatables.length; i++) {
+				const nav = currentHandler.navigatables[i];
+				// SearchGallery has a columnCount property
+				if (
+					nav &&
+					"columnCount" in nav &&
+					typeof (nav as Record<string, unknown>).columnCount === "number"
+				) {
+					searchGalleryIndex = i;
+					break;
+				}
+			}
+
+			if (searchGalleryIndex >= 0) {
+				console.log(`Found SearchGallery at position ${searchGalleryIndex}`);
+				// Use a small delay to ensure DOM is ready
+				setTimeout(() => {
+					if (currentHandler) {
+						currentHandler.setNavigatable(searchGalleryIndex);
+					}
+				}, 100);
+			} else {
+				// Fallback to first navigatable
+				console.log("SearchGallery not found, using first navigatable");
+				setTimeout(() => {
+					if (currentHandler) {
+						currentHandler.setNavigatable(0);
+					}
+				}, 100);
+			}
+		}
+
+		/**
+		 * Restore browse page navigation
+		 */
+		function restoreBrowsePageNavigation(
+			savedState: {
+				path: string;
+				position: number;
+				navigatableType: string;
+			} | null,
+		) {
+			if (!currentHandler || !currentHandler.navigatables.length) return;
+
+			// Try to restore to the saved position
+			if (savedState && savedState.position >= 0) {
+				// Make sure the position is valid
+				const targetPosition = Math.min(
+					savedState.position,
+					currentHandler.navigatables.length - 1,
+				);
+
+				console.log(
+					`Restoring browse page to position ${targetPosition} (saved: ${savedState.position})`,
+				);
+
+				// Use a small delay to ensure DOM is ready
+				setTimeout(() => {
+					if (currentHandler) {
+						currentHandler.setNavigatable(targetPosition);
+					}
+				}, 100);
+			} else {
+				// Default: Try to find a slider or billboard
+				let targetPosition = 1; // Default to position 1 (usually billboard/menu)
+
+				// Look for the first Slider or Billboard component
+				// Check for 'row' property instead of constructor.name (works with minified code)
+				for (let i = 0; i < currentHandler.navigatables.length; i++) {
+					const nav = currentHandler.navigatables[i];
+					if (nav && "row" in nav && typeof nav.row === "number") {
+						targetPosition = i;
+						break;
+					}
+				}
+
+				console.log(`No saved position, setting to position ${targetPosition}`);
+				setTimeout(() => {
+					if (currentHandler) {
+						currentHandler.setNavigatable(targetPosition);
+					}
+				}, 100);
+			}
+		}
+
+		/**
+		 * Restore generic page navigation
+		 */
+		function restoreGenericPageNavigation(
+			savedState: {
+				path: string;
+				position: number;
+				navigatableType: string;
+			} | null,
+		) {
+			if (!currentHandler || !currentHandler.navigatables.length) return;
+
+			// Use saved position if available and valid
+			if (
+				savedState &&
+				savedState.position >= 0 &&
+				savedState.position < currentHandler.navigatables.length
+			) {
+				console.log(`Restoring to saved position ${savedState.position}`);
+				currentHandler.setNavigatable(savedState.position);
+			} else {
+				// Fallback to a safe position
+				const safePosition = Math.min(
+					1,
+					currentHandler.navigatables.length - 1,
+				);
+				console.log(
+					`No valid saved position, using safe position ${safePosition}`,
+				);
+				currentHandler.setNavigatable(Math.max(0, safePosition));
+			}
+		}
+
 		browser.runtime.onMessage.addListener(
 			(
 				request: ContentScriptMessage,
@@ -194,10 +534,17 @@ export default defineContentScript({
 			if (currentHandler?.hasPath()) {
 				addHistory();
 			}
-			setPageActions();
 			try {
 				if (currentHandler) {
 					await currentHandler.load();
+
+					// Set page actions AFTER loading is complete
+					setPageActions();
+
+					// Check if modal is already open
+					if (modalDetector.isOpen()) {
+						handleModalOpen();
+					}
 				}
 			} catch (error) {
 				showError(error instanceof Error ? error : new Error(String(error)));
@@ -219,6 +566,12 @@ export default defineContentScript({
 		}
 
 		function setPageActions() {
+			console.log(
+				"[setPageActions] Called, keyboard:",
+				!!keyboard,
+				"currentHandler:",
+				currentHandler?.constructor.name,
+			);
 			if (!keyboard && currentHandler) {
 				if (currentHandler.hasSearchBar()) {
 					actionHandler.addAction(searchAction);
@@ -230,8 +583,15 @@ export default defineContentScript({
 				} else {
 					actionHandler.removeAction(backAction);
 				}
+				console.log(
+					"[setPageActions] Binding onDirection to currentHandler.onDirectionAction",
+				);
 				actionHandler.onDirection =
 					currentHandler.onDirectionAction.bind(currentHandler);
+			} else {
+				console.log(
+					"[setPageActions] Skipped - keyboard active or no currentHandler",
+				);
 			}
 		}
 
@@ -496,6 +856,26 @@ export default defineContentScript({
 		}
 
 		function goBack() {
+			// If a modal is open, close it by simulating back button
+			if (modalDetector.isOpen()) {
+				const modalContainer = modalDetector.getModalContainer();
+				if (modalContainer) {
+					// Use the close method from the modal container
+					modalContainer.exit();
+
+					// Simulate clicking the close button
+					const closeButton = document.querySelector(
+						'.previewModal-close span[role="button"]',
+					) as HTMLElement;
+
+					if (closeButton) {
+						closeButton.click();
+					}
+					return;
+				}
+			}
+
+			// Normal back navigation
 			if (handlerHistory.length > 0) {
 				unload();
 				handlerHistory.pop();

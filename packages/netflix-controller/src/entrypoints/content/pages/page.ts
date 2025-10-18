@@ -4,8 +4,13 @@ import type {
 	NavigationAction,
 } from "../../../types/components";
 import { PseudoStyler } from "../../../utils/pseudostyler.ts";
+import { InteractiveChoices } from "../components/choices.ts";
 import { DIRECTION } from "../components/direction.ts";
+import { ModalContainer } from "../components/modal-container.ts";
+import { ModalEpisodeList } from "../components/modal-episode-list.ts";
+import { ModalSimilarTitles } from "../components/modal-similar-titles.ts";
 import type { Navigatable } from "../components/navigatable.ts";
+import { SearchGallery } from "../components/search-gallery.ts";
 
 export class NavigatablePage {
 	navigatables: (Navigatable | null)[];
@@ -172,25 +177,89 @@ export class NavigatablePage {
 
 	onDirectionAction(direction: number): void {
 		if (direction === DIRECTION.UP) {
-			// If there's a navigatable and it handles up navigation internally
-			if (this.navigatables[this.position]) {
-				this.navigatables[this.position]?.up();
-			} else if (this.position > 0) {
+			// Check if current navigatable has a custom up() implementation
+			const currentNav = this.navigatables[this.position];
+			const componentName = currentNav?.constructor.name || "none";
+			console.log(
+				`[Page] UP pressed, position: ${this.position}, component: ${componentName}`,
+			);
+
+			if (currentNav && this.navigatableHandlesDirection(currentNav, "up")) {
+				// Navigatable handles up navigation internally
+				console.log(`[Page] Component handles UP internally`);
+				currentNav.up();
+			} else {
 				// Fall back to previous navigatable if current one doesn't handle up
-				this.setNavigatable(this.position - 1);
+				const prevPosition = this.position - 1;
+				if (prevPosition >= 0) {
+					console.log(
+						`[Page] Moving to previous navigatable at position ${prevPosition}`,
+					);
+					this.setNavigatable(prevPosition);
+				} else {
+					console.log(`[Page] Already at first navigatable, cannot move up`);
+				}
 			}
 		} else if (direction === DIRECTION.DOWN) {
-			// If there's a navigatable and it handles down navigation internally
-			if (this.navigatables[this.position]) {
-				this.navigatables[this.position]?.down();
+			// Check if current navigatable has a custom down() implementation
+			const currentNav = this.navigatables[this.position];
+			const componentName = currentNav?.constructor.name || "none";
+			console.log(
+				`[Page] DOWN pressed, position: ${this.position}, component: ${componentName}, total: ${this.navigatables.length}`,
+			);
+
+			if (currentNav && this.navigatableHandlesDirection(currentNav, "down")) {
+				// Navigatable handles down navigation internally
+				console.log(`[Page] Component handles DOWN internally`);
+				currentNav.down();
 			} else {
 				// Fall back to next navigatable if current one doesn't handle down
-				this.setNavigatable(this.position + 1);
+				// Always call setNavigatable even if we're at the last position
+				// This allows subclasses like SliderBrowse to dynamically load more navigatables
+				const nextPosition = this.position + 1;
+				console.log(
+					`[Page] Attempting to navigate to position ${nextPosition} (current length: ${this.navigatables.length})`,
+				);
+				this.setNavigatable(nextPosition);
 			}
 		} else if (direction === DIRECTION.LEFT) {
 			this.navigatables[this.position]?.left();
 		} else if (direction === DIRECTION.RIGHT) {
 			this.navigatables[this.position]?.right();
 		}
+	}
+
+	/**
+	 * Check if a navigatable has a custom implementation of a direction method
+	 * (not just the base no-op implementation from Slider or base class)
+	 */
+	private navigatableHandlesDirection(
+		navigatable: Navigatable,
+		_direction: "up" | "down",
+	): boolean {
+		// Use instanceof checks instead of constructor.name
+		// This works reliably even with minified code
+		//
+		// Only these components handle their own up/down navigation internally
+		// These have custom up/down logic that navigates within themselves (e.g., grids, lists)
+		//
+		// All other components delegate to the page (Slider, Billboard, TitlePanel, Menu,
+		// Jawbone, ModalButtonRow, etc.) - they only handle left/right navigation
+
+		if (
+			navigatable instanceof SearchGallery ||
+			navigatable instanceof ModalContainer ||
+			navigatable instanceof ModalEpisodeList ||
+			navigatable instanceof ModalSimilarTitles ||
+			navigatable instanceof InteractiveChoices
+		) {
+			return true;
+		}
+
+		// Default: delegate to page-level navigation
+		// This is safe even for minified code where class names are shortened
+		// Note: Even if a component has up/down methods, we default to delegating
+		// to avoid components with empty stub methods incorrectly "handling" navigation
+		return false;
 	}
 }
