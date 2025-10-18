@@ -159,9 +159,7 @@ export default defineContentScript({
 				return;
 			}
 
-			console.log(
-				"Modal opened - saving page state and setting up modal navigation",
-			);
+			console.log("Modal opened - saving page state");
 
 			try {
 				// Save current page state for later restoration
@@ -178,35 +176,16 @@ export default defineContentScript({
 					currentNavigatableType,
 				);
 
-				// Exit current navigatable to pause navigation
-				currentHandler.exit();
-
-				// Get the modal container
+				// Verify modal container is available
 				const modalContainer = modalDetector.getModalContainer();
 				if (!modalContainer) {
 					console.log("No modal container available");
 					return;
 				}
 
-				// Clear any existing modal navigatables to prevent duplicates
-				// Check for 'modal' property instead of constructor.name (works with minified code)
-				for (let i = 0; i < currentHandler.navigatables.length; i++) {
-					const nav = currentHandler.navigatables[i];
-					if (nav && "modal" in nav && "navigatables" in nav) {
-						// ModalContainer has both 'modal' and 'navigatables' properties
-						console.log("Removing existing modal container");
-						currentHandler.removeNavigatable(i);
-						break;
-					}
-				}
-
-				// Add modal container as a temporary navigatable at position 0
-				console.log("Adding modal container as navigatable at position 0");
-				currentHandler.addNavigatable(0, modalContainer);
-
-				// Set focus to the modal
-				console.log("Setting focus to modal");
-				currentHandler.setNavigatable(0);
+				// Initialize modal navigation
+				// The modal will start at position 0 by default
+				console.log("Modal container ready for navigation");
 
 				// Update actions for modal navigation
 				actionHandler.removeAction(searchAction);
@@ -227,55 +206,6 @@ export default defineContentScript({
 			console.log("Modal closed - restoring page navigation");
 
 			try {
-				// Find and remove modal container from navigatables
-				// Use property check instead of reference comparison since the modal might be cleaned up
-				let modalIndex = -1;
-				for (let i = 0; i < currentHandler.navigatables.length; i++) {
-					const nav = currentHandler.navigatables[i];
-					// Check for ModalContainer properties (modal + navigatables)
-					if (nav && "modal" in nav && "navigatables" in nav) {
-						modalIndex = i;
-						console.log(`Found modal container at position ${i}`);
-						break;
-					}
-				}
-
-				if (modalIndex >= 0) {
-					console.log(
-						`Removing modal from position ${modalIndex}, current position: ${currentHandler.position}`,
-					);
-
-					// Exit the modal first if it's the current navigatable
-					if (currentHandler.position === modalIndex) {
-						console.log("Exiting modal");
-						currentHandler.exit();
-					}
-
-					// Remove the modal navigatable
-					console.log(
-						`Before removal: navigatables.length = ${currentHandler.navigatables.length}`,
-					);
-					currentHandler.removeNavigatable(modalIndex);
-					console.log(
-						`After removal: navigatables.length = ${currentHandler.navigatables.length}`,
-					);
-
-					// Adjust position if needed
-					if (currentHandler.position > modalIndex) {
-						const oldPosition = currentHandler.position;
-						currentHandler.position = currentHandler.position - 1;
-						console.log(
-							`Adjusted position from ${oldPosition} to ${currentHandler.position}`,
-						);
-					} else if (currentHandler.position === modalIndex) {
-						// We were on the modal, move to position 0
-						currentHandler.position = 0;
-						console.log("Was on modal, reset position to 0");
-					}
-				} else {
-					console.log("No modal container found in navigatables");
-				}
-
 				// Get the saved page state
 				const savedState = modalDetector.getSavedPageState();
 
@@ -584,10 +514,25 @@ export default defineContentScript({
 					actionHandler.removeAction(backAction);
 				}
 				console.log(
-					"[setPageActions] Binding onDirection to currentHandler.onDirectionAction",
+					"[setPageActions] Setting up direction handler with modal interception",
 				);
-				actionHandler.onDirection =
-					currentHandler.onDirectionAction.bind(currentHandler);
+
+				// Intercept direction events at the highest level
+				// If modal is open, route to modal; otherwise route to page handler
+				actionHandler.onDirection = (direction: number) => {
+					const modalContainer = modalDetector.getModalContainer();
+					const isModalOpen = modalDetector.isOpen();
+
+					if (isModalOpen && modalContainer) {
+						// Route directly to modal
+						console.log("[setPageActions] Routing direction to modal");
+						modalContainer.onDirectionAction(direction);
+					} else {
+						// Route to page handler
+						console.log("[setPageActions] Routing direction to page handler");
+						currentHandler?.onDirectionAction(direction);
+					}
+				};
 			} else {
 				console.log(
 					"[setPageActions] Skipped - keyboard active or no currentHandler",

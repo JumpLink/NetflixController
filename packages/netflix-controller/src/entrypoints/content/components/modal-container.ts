@@ -4,6 +4,7 @@ import type {
 	ExitResult,
 	NavigationAction,
 } from "../../../types/components";
+import { DIRECTION } from "./direction.ts";
 import { ModalButtonRow } from "./modal-button-row";
 import { ModalEpisodeList } from "./modal-episode-list";
 import { ModalSimilarTitles } from "./modal-similar-titles";
@@ -262,12 +263,6 @@ export class ModalContainer extends Navigatable {
 	up(): void {
 		this.logDebug(`Up pressed, current position: ${this.position}`);
 
-		// Ignore input if modal is not active (position is -1 after exit)
-		if (this.position < 0) {
-			this.logDebug("Modal not active (position < 0), ignoring input");
-			return;
-		}
-
 		// Check if current navigatable can handle this internally
 		if (this.position >= 0 && this.position < this.navigatables.length) {
 			const navigatable = this.navigatables[this.position];
@@ -320,12 +315,6 @@ export class ModalContainer extends Navigatable {
 	 */
 	down(): void {
 		this.logDebug(`Down pressed, current position: ${this.position}`);
-
-		// Ignore input if modal is not active (position is -1 after exit)
-		if (this.position < 0) {
-			this.logDebug("Modal not active (position < 0), ignoring input");
-			return;
-		}
 
 		// Check if current navigatable can handle this internally
 		if (this.position >= 0 && this.position < this.navigatables.length) {
@@ -380,12 +369,6 @@ export class ModalContainer extends Navigatable {
 	left(): void {
 		this.logDebug(`Left pressed, current position: ${this.position}`);
 
-		// Ignore input if modal is not active (position is -1 after exit)
-		if (this.position < 0) {
-			this.logDebug("Modal not active (position < 0), ignoring input");
-			return;
-		}
-
 		if (this.position < this.navigatables.length) {
 			this.navigatables[this.position].left();
 		}
@@ -397,14 +380,23 @@ export class ModalContainer extends Navigatable {
 	right(): void {
 		this.logDebug(`Right pressed, current position: ${this.position}`);
 
-		// Ignore input if modal is not active (position is -1 after exit)
-		if (this.position < 0) {
-			this.logDebug("Modal not active (position < 0), ignoring input");
-			return;
-		}
-
 		if (this.position < this.navigatables.length) {
 			this.navigatables[this.position].right();
+		}
+	}
+
+	/**
+	 * Handle direction input (dispatches to up/down/left/right methods)
+	 */
+	onDirectionAction(direction: number): void {
+		if (direction === DIRECTION.UP) {
+			this.up();
+		} else if (direction === DIRECTION.DOWN) {
+			this.down();
+		} else if (direction === DIRECTION.LEFT) {
+			this.left();
+		} else if (direction === DIRECTION.RIGHT) {
+			this.right();
 		}
 	}
 

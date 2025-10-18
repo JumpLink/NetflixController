@@ -6,9 +6,6 @@ import type {
 import { PseudoStyler } from "../../../utils/pseudostyler.ts";
 import { InteractiveChoices } from "../components/choices.ts";
 import { DIRECTION } from "../components/direction.ts";
-import { ModalContainer } from "../components/modal-container.ts";
-import { ModalEpisodeList } from "../components/modal-episode-list.ts";
-import { ModalSimilarTitles } from "../components/modal-similar-titles.ts";
 import type { Navigatable } from "../components/navigatable.ts";
 import { SearchGallery } from "../components/search-gallery.ts";
 
@@ -244,13 +241,14 @@ export class NavigatablePage {
 		// These have custom up/down logic that navigates within themselves (e.g., grids, lists)
 		//
 		// All other components delegate to the page (Slider, Billboard, TitlePanel, Menu,
-		// Jawbone, ModalButtonRow, etc.) - they only handle left/right navigation
+		// Jawbone, etc.) - they only handle left/right navigation
+		//
+		// Note: ModalContainer and its children (ModalEpisodeList, ModalSimilarTitles, ModalButtonRow)
+		// are NOT in this list because modal navigation is handled at a higher level
+		// (intercepted in setPageActions before reaching the page handler)
 
 		if (
 			navigatable instanceof SearchGallery ||
-			navigatable instanceof ModalContainer ||
-			navigatable instanceof ModalEpisodeList ||
-			navigatable instanceof ModalSimilarTitles ||
 			navigatable instanceof InteractiveChoices
 		) {
 			return true;
