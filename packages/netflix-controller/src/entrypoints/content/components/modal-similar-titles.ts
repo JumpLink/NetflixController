@@ -8,41 +8,70 @@ import type {
 import { StaticNavigatable } from "./static-navigatable.ts";
 
 /**
- * Netflix Modal Similar Titles Component
+ * Netflix Modal Content Collections Component
  *
- * Handles navigation for the "More Like This" or "Similar Titles" section
- * in Netflix detail modals. Displays recommended content in a grid layout
- * based on the currently viewed movie or TV show.
+ * Handles navigation for various content collection sections in Netflix detail modals,
+ * including "More Like This", Collections, and Trailers. Displays related content
+ * in grid layouts based on the currently viewed movie or TV show.
  *
- * Netflix UI Target: The "More Like This" / "Similar Titles" grid section
- * at the bottom of detail modals, showing:
- * - Horizontally scrollable rows of recommended content
- * - Movie/TV show posters with title overlays
- * - Integration with Netflix's recommendation algorithm
- * - Responsive grid layout adapting to available space
+ * Netflix UI Target: Various content collection sections in detail modals:
+ * - "More Like This" / "Similar Titles" (recommendations)
+ * - Collections (related content groupings)
+ * - Trailers and More (trailer/preview content)
  *
  * Features:
- * - Horizontal scrolling through recommendations
- * - Responsive column count based on container width
- * - Integration with Netflix's similar titles API
+ * - Horizontal scrolling through content collections
+ * - Responsive grid layout adapting to available space
+ * - Integration with Netflix's content recommendation system
  * - Visual styling consistent with Netflix's design
- * - Support for both movies and TV show recommendations
+ * - Support for movies, TV shows, and trailer content
+ * - Dynamic content loading and responsive column adjustment
  */
 export class ModalSimilarTitles extends StaticNavigatable {
 	private modal: HTMLElement;
 	private similarTitlesContainer: HTMLElement | null = null;
 	private columnCount: number = 1;
 	private resizeObserver: ResizeObserver | null = null;
+	private readonly containerType: string;
 
-	constructor(modal: HTMLElement) {
+	constructor(modal: HTMLElement, containerType?: string) {
 		super();
 		this.modal = modal;
-		this.similarTitlesContainer = this.modal.querySelector(
-			".moreLikeThis--container",
-		) as HTMLElement;
+		this.containerType = containerType || "auto";
+
+		// Find the appropriate container based on type or auto-detect
+		this.similarTitlesContainer = this.findContainer();
+
+		console.log(
+			`[ModalSimilarTitles] Created for type: ${this.containerType}, found container:`,
+			this.similarTitlesContainer,
+		);
 
 		// Setup resize observer to recalculate columns
 		this.setupResizeObserver();
+	}
+
+	/**
+	 * Get the container type for this instance
+	 */
+	public getContainerType(): string {
+		return this.containerType;
+	}
+
+	/**
+	 * Find the appropriate container based on the specified type
+	 */
+	private findContainer(): HTMLElement | null {
+		const selectors = {
+			similar: ".moreLikeThis--container",
+			collection: ".titleGroup--container",
+			trailers: ".trailersAndMore--container",
+			auto: ".moreLikeThis--container, .titleGroup--container, .trailersAndMore--container",
+		};
+
+		const selector =
+			selectors[this.containerType as keyof typeof selectors] || selectors.auto;
+		return this.modal.querySelector(selector) as HTMLElement;
 	}
 
 	/**
@@ -84,10 +113,19 @@ export class ModalSimilarTitles extends StaticNavigatable {
 	getComponents(): NavigatableComponent[] {
 		if (!this.similarTitlesContainer) return [];
 
+		// Choose selector based on container type
+		const selector =
+			this.containerType === "trailers"
+				? '.trailers-and-more-item .titleCard--container[role="button"]'
+				: '.titleCard--container[role="button"]';
+
 		const titleItems = this.similarTitlesContainer.querySelectorAll(
-			'.titleCard--container[role="button"]',
+			selector,
 		) as NodeListOf<HTMLElement>;
 
+		console.log(
+			`[ModalSimilarTitles] Found ${titleItems.length} title cards in ${this.containerType} container`,
+		);
 		return Array.from(titleItems);
 	}
 

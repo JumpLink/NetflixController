@@ -53,10 +53,12 @@ export class ModalContainer extends Navigatable {
 		) as HTMLElement;
 
 		if (this.modal) {
-			// Find close button
+			// Find close button - try multiple selectors
 			this.closeButton = this.modal.querySelector(
-				'.previewModal-close span[role="button"]',
+				'.previewModal-close span[role="button"], .previewModal-close [role="button"], .previewModal-close button',
 			) as HTMLElement;
+
+			this.logDebug(`Close button found: ${!!this.closeButton}`);
 		} else {
 			this.logDebug("Modal element not found in DOM");
 		}
@@ -183,7 +185,10 @@ export class ModalContainer extends Navigatable {
 		// Also set up a short-term observer to catch when they load
 		if (!this.modal) return;
 
-		const similarContainer = this.modal.querySelector(".moreLikeThis--wrapper");
+		// Look for any of the container types
+		const similarContainer = this.modal.querySelector(
+			".moreLikeThis--wrapper, .titleGroup--wrapper, .trailersAndMore--wrapper",
+		);
 		if (!similarContainer) {
 			this.logDebug("Similar titles container not found");
 			return;
@@ -210,35 +215,57 @@ export class ModalContainer extends Navigatable {
 	}
 
 	/**
-	 * Check if similar titles are available and add them if not already added
-	 * Returns true if similar titles were found
+	 * Check if similar titles/collections/trailers are available and add them if not already added
+	 * Returns true if content collections were found
 	 */
 	private checkAndAddSimilarTitles(): boolean {
 		if (!this.modal) return false;
 
-		// Check if we already have similar titles in navigatables
-		// Check for 'similarTitlesContainer' property instead of constructor.name (works with minified code)
-		const hasSimilarTitles = this.navigatables.some(
-			(nav) => nav && "similarTitlesContainer" in nav,
-		);
+		// Check if we already have collections for each type
+		// Order matters! Should be: Episodes -> Collections -> Similar Titles -> Trailers
+		const containerTypes = [
+			{ selector: ".titleGroup--container", type: "collection" },
+			{ selector: ".moreLikeThis--container", type: "similar" },
+			{ selector: ".trailersAndMore--container", type: "trailers" },
+		];
 
-		if (hasSimilarTitles) {
-			return true; // Already added
-		}
+		let addedAny = false;
 
-		// Try to add similar titles
-		const similarTitles = new ModalSimilarTitles(this.modal);
-		const similarComponents = similarTitles.getComponents();
-
-		if (similarComponents && similarComponents.length > 0) {
-			this.navigatables.push(similarTitles);
-			this.logDebug(
-				`Added similar titles with ${similarComponents.length} items`,
+		for (const { selector, type } of containerTypes) {
+			// Check if we already have this type
+			const hasThisType = this.navigatables.some(
+				(nav) =>
+					nav instanceof ModalSimilarTitles && nav.getContainerType() === type,
 			);
-			return true;
+
+			if (hasThisType) {
+				this.logDebug(`Container type ${type} already added`);
+				continue;
+			}
+
+			// Check if this container exists
+			const container = this.modal.querySelector(selector);
+			if (!container) {
+				this.logDebug(`Container ${selector} not found`);
+				continue;
+			}
+
+			// Try to add content collection for this type
+			const contentCollection = new ModalSimilarTitles(this.modal, type);
+			const collectionComponents = contentCollection.getComponents();
+
+			if (collectionComponents && collectionComponents.length > 0) {
+				this.navigatables.push(contentCollection);
+				this.logDebug(
+					`Added ${type} collection with ${collectionComponents.length} items`,
+				);
+				addedAny = true;
+			} else {
+				this.logDebug(`${type} collection has no components`);
+			}
 		}
 
-		return false;
+		return addedAny;
 	}
 
 	/**
@@ -429,6 +456,9 @@ export class ModalContainer extends Navigatable {
 
 		// Select the first navigatable
 		if (this.navigatables.length > 0) {
+			this.logDebug(
+				`Selecting first navigatable (position 0) from ${this.navigatables.length} available`,
+			);
 			this.select(0);
 		} else {
 			this.logDebug("No navigatables available to select");
@@ -443,11 +473,13 @@ export class ModalContainer extends Navigatable {
 
 		// Exit current navigatable
 		if (this.position >= 0 && this.position < this.navigatables.length) {
+			this.logDebug(`Exiting navigatable at position ${this.position}`);
 			this.navigatables[this.position].exit();
 		}
 
 		// Reset state
 		this.position = -1;
+		this.logDebug("Modal container deactivated");
 		return {};
 	}
 
@@ -513,7 +545,7 @@ export class ModalContainer extends Navigatable {
 	/**
 	 * Close the modal
 	 */
-	private close(): void {
+	public close(): void {
 		this.logDebug("Close modal requested");
 
 		if (this.closeButton) {

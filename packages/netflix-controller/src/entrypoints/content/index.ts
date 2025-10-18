@@ -187,8 +187,11 @@ export default defineContentScript({
 				// The modal will start at position 0 by default
 				console.log("Modal container ready for navigation");
 
-				// Update actions for modal navigation
+				// Update actions for modal navigation - remove search since we're entering modal
 				actionHandler.removeAction(searchAction);
+
+				// Update page actions to show back button for modal
+				setPageActions();
 			} catch (error) {
 				console.error("Error during modal open:", error);
 			}
@@ -503,12 +506,15 @@ export default defineContentScript({
 				currentHandler?.constructor.name,
 			);
 			if (!keyboard && currentHandler) {
-				if (currentHandler.hasSearchBar()) {
+				// Don't show search if we're currently in a modal
+				const isInModal = currentHandler.constructor.name === "ModalContainer";
+				if (currentHandler.hasSearchBar() && !isInModal) {
 					actionHandler.addAction(searchAction);
 				} else {
 					actionHandler.removeAction(searchAction);
 				}
-				if (handlerHistory.length >= 2) {
+				// Show back button if we have history OR if modal is open (for non-modal pages)
+				if (handlerHistory.length >= 2 || modalDetector.isOpen()) {
 					actionHandler.addAction(backAction);
 				} else {
 					actionHandler.removeAction(backAction);
@@ -801,30 +807,83 @@ export default defineContentScript({
 		}
 
 		function goBack() {
-			// If a modal is open, close it by simulating back button
+			// If a modal is open, try to close it
 			if (modalDetector.isOpen()) {
+				console.log("[goBack] Modal is open, attempting to close it");
+
+				// Prefer history.back() if history is available
+				if (handlerHistory.length > 0) {
+					console.log("[goBack] Using window.history.back() to close modal");
+					unload();
+					handlerHistory.pop();
+
+					// Listen for popstate event to restore handler after navigation
+					const handlePopState = () => {
+						console.log("[goBack] Popstate event fired, restoring handler");
+						window.removeEventListener("popstate", handlePopState);
+						runHandler(window.location.pathname, true);
+					};
+
+					window.addEventListener("popstate", handlePopState);
+					window.history.back();
+					return;
+				}
+
+				// No history available - use close button as fallback
 				const modalContainer = modalDetector.getModalContainer();
 				if (modalContainer) {
-					// Use the close method from the modal container
-					modalContainer.exit();
+					console.log(
+						"[goBack] No history available, using close button fallback",
+					);
 
-					// Simulate clicking the close button
-					const closeButton = document.querySelector(
-						'.previewModal-close span[role="button"]',
-					) as HTMLElement;
-
-					if (closeButton) {
-						closeButton.click();
+					// First try to use the modal container's close method
+					try {
+						modalContainer.close();
+						console.log(
+							"[goBack] Successfully closed modal via modalContainer.close()",
+						);
+						return;
+					} catch (error) {
+						console.log("[goBack] modalContainer.close() failed:", error);
 					}
+
+					// Fallback: try to find and click the close button
+					const closeSelectors = [
+						'.previewModal-close span[role="button"]',
+						'.previewModal-close [role="button"]',
+						".previewModal-close button",
+						'[data-uia="previewModal-closebtn"]',
+						'span[aria-label="close"]',
+					];
+
+					for (const selector of closeSelectors) {
+						const closeButton = document.querySelector(selector) as HTMLElement;
+						if (closeButton) {
+							console.log(
+								`[goBack] Found close button with selector: ${selector}`,
+							);
+							closeButton.click();
+							return;
+						}
+					}
+
+					console.log(
+						"[goBack] No close button found, falling back to modalContainer.exit()",
+					);
+					// Last resort: exit the modal container
+					modalContainer.exit();
 					return;
 				}
 			}
 
 			// Normal back navigation
 			if (handlerHistory.length > 0) {
+				console.log("[goBack] Performing normal back navigation");
 				unload();
 				handlerHistory.pop();
 				window.history.back();
+			} else {
+				console.log("[goBack] No history available for back navigation");
 			}
 		}
 
