@@ -8,7 +8,24 @@ import type {
 import { StaticNavigatable } from "./static-navigatable.ts";
 
 /**
- * Handles navigation for the play, add to list, and like buttons in the detail modal
+ * Netflix Modal Action Button Row Component
+ *
+ * Handles navigation for the horizontal row of action buttons in Netflix detail modals.
+ * These buttons include Play, Add to List, Like/Unlike, and other content actions.
+ *
+ * Netflix UI Target: The horizontal row of action buttons that appears at the top
+ * of detail modals, typically including:
+ * - Play button (primary action)
+ * - Add to List / Remove from List
+ * - Like/Unlike button (thumbs up/down)
+ * - Share button
+ * - Download button (when available)
+ *
+ * Features:
+ * - Horizontal navigation between action buttons
+ * - Like dropdown menu support (thumbs up/down options)
+ * - Button state management (enabled/disabled)
+ * - Integration with Netflix's modal button styling
  */
 export class ModalButtonRow extends StaticNavigatable {
 	private modal: HTMLElement;

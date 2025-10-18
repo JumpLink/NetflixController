@@ -5,6 +5,22 @@ import type { Navigatable } from "../components/navigatable";
 import { Slider } from "../components/slider.js";
 import { NavigatablePage } from "./page.ts";
 
+/**
+ * Netflix Browse Page Handler
+ *
+ * Handles the main Netflix browse/home page with horizontal content sliders.
+ * This page contains multiple rows of content organized by categories like:
+ * - "Trending Now", "Continue Watching", "My List", etc.
+ *
+ * Netflix UI Target: The main browse page at "/" with horizontal scrolling
+ * content rows, billboard banner, and category navigation.
+ *
+ * Features:
+ * - Dynamic loading of new slider rows as user navigates down
+ * - Jawbone integration for category selection
+ * - Billboard integration for featured content
+ * - Menu navigation support
+ */
 export class SliderBrowse extends NavigatablePage {
 	loadingRow: number;
 	currentRow: number;

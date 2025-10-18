@@ -8,7 +8,26 @@ import type {
 import { StaticNavigatable } from "./static-navigatable.ts";
 
 /**
- * Handles navigation for the episode list in the detail modal
+ * Netflix Modal Episode List Component
+ *
+ * Handles navigation for the list of episodes/seasons in Netflix detail modals
+ * for TV shows. Displays episodes in a grid or list format with season/episode
+ * information and allows selection of specific episodes.
+ *
+ * Netflix UI Target: The episode selection interface in TV show detail modals,
+ * typically showing:
+ * - Season selector dropdown
+ * - Grid/list of episodes with thumbnails
+ * - Episode titles, descriptions, and metadata
+ * - Play buttons for individual episodes
+ * - Episode duration and release information
+ *
+ * Features:
+ * - Season selection and episode browsing
+ * - Grid-based episode layout
+ * - Episode metadata display
+ * - Integration with Netflix's episode selection UI
+ * - Support for different episode view modes
  */
 export class ModalEpisodeList extends StaticNavigatable {
 	private modal: HTMLElement;

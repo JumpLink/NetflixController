@@ -5,6 +5,27 @@ import type {
 	Styler,
 } from "../../../types/components";
 
+/**
+ * Abstract Base Class for Netflix Navigatable UI Components
+ *
+ * Provides the foundation for all Netflix UI components that support gamepad navigation.
+ * Any Netflix UI element that can be focused and navigated to must extend this class.
+ *
+ * Netflix UI Target: All interactive UI elements in Netflix that support gamepad
+ * navigation, including sliders, buttons, modals, menus, and content grids.
+ *
+ * Core Navigation Methods:
+ * - left()/right(): Horizontal navigation within components
+ * - up()/down(): Vertical navigation between components
+ * - enter(): Component activation/selection
+ * - exit(): Component deactivation/cleanup
+ *
+ * Features:
+ * - Abstract navigation interface for all UI components
+ * - Styling support for focus states
+ * - Lifecycle management (enter/exit)
+ * - Integration with Netflix's navigation system
+ */
 export abstract class Navigatable {
 	styler: Styler | null;
 

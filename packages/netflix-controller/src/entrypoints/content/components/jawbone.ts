@@ -10,6 +10,24 @@ import { TitlePanel } from "./title-panel.ts";
 
 declare let currentHandler: Handler;
 
+/**
+ * Netflix Jawbone Category Navigation Component
+ *
+ * Handles the expandable category navigation that appears above content sliders
+ * on Netflix browse pages. The jawbone provides quick access to subcategories
+ * within a main content category (e.g., "TV Shows" → "Action", "Comedy", "Drama").
+ *
+ * Netflix UI Target: The expandable horizontal menu that appears above content
+ * rows when pressing left on a slider, showing subcategories like "Action",
+ * "Comedy", "Drama" under main categories like "TV Shows" or "Movies".
+ *
+ * Features:
+ * - Expandable/collapsible category navigation
+ * - Integration with slider content filtering
+ * - Tab-based subcategory selection
+ * - Visual styling for active/inactive states
+ * - Support for inline vs overlay jawbone modes
+ */
 export class Jawbone extends TitlePanel {
 	jawbone: Element | null;
 	inline: boolean;

@@ -6,6 +6,25 @@ import type {
 import type { PseudoStyler } from "../../../utils/pseudostyler.ts";
 import { StaticNavigatable } from "./static-navigatable.ts";
 
+/**
+ * Netflix Search Results Grid Component
+ *
+ * Handles the grid-based layout of search results on Netflix search pages.
+ * Displays search results in a responsive grid that adapts to screen size
+ * and supports infinite scrolling as users navigate through results.
+ *
+ * Netflix UI Target: The grid layout of search results that appears when
+ * searching for movies/TV shows. Results are displayed in rows and columns
+ * with poster images and can be scrolled both horizontally and vertically.
+ *
+ * Features:
+ * - Responsive grid layout (adapts to screen width)
+ * - Infinite scroll support for large result sets
+ * - 2D navigation (up/down between rows, left/right within rows)
+ * - Dynamic column count calculation
+ * - MutationObserver for dynamic content loading
+ * - Debounced scroll/resize handlers for performance
+ */
 export class SearchGallery extends StaticNavigatable {
 	private columnCount: number;
 	private resizeHandler: () => void;

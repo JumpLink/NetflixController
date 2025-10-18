@@ -11,7 +11,25 @@ import { ModalSimilarTitles } from "./modal-similar-titles";
 import { Navigatable } from "./navigatable.ts";
 
 /**
- * Manages navigation within the Netflix detail modal dialog
+ * Netflix Detail Modal Container Component
+ *
+ * Manages navigation and interaction within Netflix's detail modal dialogs.
+ * These modals appear when clicking on movies/TV shows and contain multiple
+ * sections like action buttons, episode lists, and similar titles.
+ *
+ * Netflix UI Target: The large modal dialog that appears when selecting
+ * content, containing:
+ * - Action buttons (Play, Add to List, etc.)
+ * - Content details and metadata
+ * - Episode list (for TV shows)
+ * - Similar titles recommendations
+ *
+ * Features:
+ * - Multi-section navigation (buttons → episodes → similar titles)
+ * - Dynamic content loading for episodes and similar titles
+ * - MutationObserver for DOM changes
+ * - Close button integration
+ * - State management for active/inactive modal
  */
 export class ModalContainer extends Navigatable {
 	private modal: HTMLElement | null = null;

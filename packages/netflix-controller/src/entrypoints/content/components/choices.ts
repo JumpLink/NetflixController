@@ -6,6 +6,27 @@ import type {
 } from "../../../types/components.ts";
 import { StaticNavigatable } from "./static-navigatable.ts";
 
+/**
+ * Netflix Interactive Content Choice Component
+ *
+ * Handles interactive choice selection in Netflix's interactive/special
+ * content (like Black Mirror: Bandersnatch or other choose-your-own-adventure
+ * style content). Manages the selection of story branches and choices.
+ *
+ * Netflix UI Target: Interactive choice interfaces in special Netflix content,
+ * typically showing:
+ * - Multiple choice options for story branches
+ * - Visual selection indicators
+ * - Timed choice presentation
+ * - Integration with Netflix's interactive content system
+ *
+ * Features:
+ * - Choice selection with keyboard/gamepad input
+ * - Visual focus management for choice options
+ * - Timed choice presentation with delays
+ * - MutationObserver for dynamic content loading
+ * - Integration with Netflix's interactive story system
+ */
 export class InteractiveChoices extends StaticNavigatable {
 	ready: boolean;
 	dispatchKey: (keycode: number, shift: boolean) => void;

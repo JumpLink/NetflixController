@@ -5,6 +5,22 @@ import type {
 } from "../../../types/components.ts";
 import { StaticNavigatable } from "./static-navigatable.ts";
 
+/**
+ * Abstract Base Class for Netflix Title Panel Components
+ *
+ * Handles Netflix content panels that display title information, metadata,
+ * and action buttons (Play, Add to List, etc.). Used for both billboard
+ * banners and regular title rows.
+ *
+ * Netflix UI Target: Title information panels with action buttons that appear
+ * when hovering/focusing on content items in browse pages, search results, etc.
+ *
+ * Features:
+ * - Primary and secondary action button support
+ * - Metadata display (title, description, rating, etc.)
+ * - Focus management for button navigation
+ * - Abstract methods for different panel types (billboard vs regular)
+ */
 export class TitlePanel extends StaticNavigatable {
 	row?: number;
 	primaryButton: Element | null;

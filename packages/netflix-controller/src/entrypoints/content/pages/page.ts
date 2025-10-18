@@ -9,6 +9,23 @@ import { DIRECTION } from "../components/direction.ts";
 import type { Navigatable } from "../components/navigatable.ts";
 import { SearchGallery } from "../components/search-gallery.ts";
 
+/**
+ * Abstract Base Class for Netflix Page Handlers
+ *
+ * Provides the foundation for handling navigation and interaction on different
+ * Netflix pages. Each Netflix page (browse, search, profile selection, etc.)
+ * has its own handler that extends this class.
+ *
+ * Netflix UI Target: All Netflix pages that require gamepad navigation
+ * including browse pages, search results, profile selection, and modal dialogs.
+ *
+ * Core Features:
+ * - Manages a collection of navigatable UI components
+ * - Handles up/down/left/right navigation between components
+ * - Provides styling support for focused elements
+ * - Supports dynamic loading of page content
+ * - Integrates with the global action system
+ */
 export class NavigatablePage {
 	navigatables: (Navigatable | null)[];
 	loaded: boolean;

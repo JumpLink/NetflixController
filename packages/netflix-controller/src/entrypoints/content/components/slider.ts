@@ -12,6 +12,25 @@ declare let actionHandler: ActionHandler;
 declare let currentHandler: Handler;
 declare function getTransparentNetflixRed(opacity: number): string;
 
+/**
+ * Netflix Horizontal Content Slider Component
+ *
+ * Handles horizontal scrolling rows of content on Netflix browse and search pages.
+ * Each slider represents a category of content (e.g., "Trending Now", "Continue Watching",
+ * "Action Movies", etc.) and contains multiple content items that can be scrolled
+ * horizontally.
+ *
+ * Netflix UI Target: Horizontal content rows on browse pages and search results
+ * that contain movies/TV shows organized by category. Users can scroll left/right
+ * through content and up/down between different category rows.
+ *
+ * Features:
+ * - Horizontal scrolling through content items
+ * - Jawbone integration for category expansion
+ * - Focus management for content selection
+ * - Dynamic loading of content as user scrolls
+ * - Integration with Netflix's row-based layout system
+ */
 export class Slider extends Navigatable {
 	row: number;
 	rowNode: Element;

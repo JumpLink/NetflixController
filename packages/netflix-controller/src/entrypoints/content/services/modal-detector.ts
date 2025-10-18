@@ -8,7 +8,30 @@ type PageState = {
 };
 
 /**
- * Service to detect and manage Netflix detail modals across different pages
+ * Netflix Modal Detection and Management Service
+ *
+ * Singleton service that detects, tracks, and manages Netflix detail modals
+ * across different pages. Handles modal lifecycle events and coordinates
+ * between page navigation and modal navigation.
+ *
+ * Netflix UI Target: All Netflix detail modals that appear when selecting
+ * movies/TV shows, including:
+ * - Movie detail modals
+ * - TV show detail modals with episode lists
+ * - Content information and action dialogs
+ *
+ * Core Features:
+ * - Modal open/close detection via URL and DOM changes
+ * - Page state preservation during modal interactions
+ * - Modal container lifecycle management
+ * - Event callback system for modal state changes
+ * - Integration with Netflix's modal URL parameter system (jbv=modalId)
+ *
+ * Technical Implementation:
+ * - MutationObserver for DOM-based modal detection
+ * - URL parameter monitoring for modal state
+ * - Singleton pattern for consistent state across pages
+ * - Debounced event handling for performance
  */
 export class ModalDetector {
 	private static instance: ModalDetector;

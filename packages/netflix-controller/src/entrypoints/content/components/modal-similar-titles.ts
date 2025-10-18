@@ -8,7 +8,25 @@ import type {
 import { StaticNavigatable } from "./static-navigatable.ts";
 
 /**
- * Handles navigation for the similar titles grid in the detail modal
+ * Netflix Modal Similar Titles Component
+ *
+ * Handles navigation for the "More Like This" or "Similar Titles" section
+ * in Netflix detail modals. Displays recommended content in a grid layout
+ * based on the currently viewed movie or TV show.
+ *
+ * Netflix UI Target: The "More Like This" / "Similar Titles" grid section
+ * at the bottom of detail modals, showing:
+ * - Horizontally scrollable rows of recommended content
+ * - Movie/TV show posters with title overlays
+ * - Integration with Netflix's recommendation algorithm
+ * - Responsive grid layout adapting to available space
+ *
+ * Features:
+ * - Horizontal scrolling through recommendations
+ * - Responsive column count based on container width
+ * - Integration with Netflix's similar titles API
+ * - Visual styling consistent with Netflix's design
+ * - Support for both movies and TV show recommendations
  */
 export class ModalSimilarTitles extends StaticNavigatable {
 	private modal: HTMLElement;

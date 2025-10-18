@@ -12,6 +12,23 @@ import { Navigatable } from "./navigatable.ts";
 // Import from content/index.ts - this would normally be a separate utility
 declare function getTransparentNetflixRed(opacity: number): string;
 
+/**
+ * Abstract Base Class for Netflix Static Navigatable Components
+ *
+ * Extends Navigatable for components that have a fixed set of navigatable
+ * elements that don't change during runtime. These components typically
+ * represent static UI elements like menus, button rows, or content grids.
+ *
+ * Netflix UI Target: Static UI elements with fixed navigation structure,
+ * such as menus, button rows, profile grids, and content selection grids.
+ *
+ * Features:
+ * - Fixed component list that doesn't change at runtime
+ * - Position-based navigation within the component list
+ * - Abstract getComponents() method for defining navigatable elements
+ * - Focus styling and state management
+ * - Integration with Netflix's static navigation patterns
+ */
 export abstract class StaticNavigatable extends Navigatable {
 	position: number;
 	_components: NavigatableComponent[] | null = null;
