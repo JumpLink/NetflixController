@@ -36,12 +36,22 @@ export class TitlePanel extends StaticNavigatable {
 		const baseSelector = this.getButtonSelector();
 
 		if (panel) {
+			console.log(`[TitlePanel] Looking for buttons in panel:`, panel);
+			console.log(`[TitlePanel] Using selector: ${baseSelector}`);
+
+			// Find primary button (can be button or a element)
 			this.primaryButton = panel.querySelector(
-				`${baseSelector} button.color-primary`,
+				`${baseSelector} button.color-primary, ${baseSelector} a.playLink`,
 			);
+			console.log(`[TitlePanel] Primary button found:`, this.primaryButton);
+
+			// Find secondary button
 			this.secondaryButton = panel.querySelector(
 				`${baseSelector} button.color-secondary`,
 			);
+			console.log(`[TitlePanel] Secondary button found:`, this.secondaryButton);
+		} else {
+			console.log(`[TitlePanel] No panel found`);
 		}
 	}
 
@@ -54,17 +64,55 @@ export class TitlePanel extends StaticNavigatable {
 	}
 
 	getComponents(): NavigatableComponent[] {
-		return [this.primaryButton, this.secondaryButton].filter(
+		const components = [this.primaryButton, this.secondaryButton].filter(
 			(btn): btn is NavigatableComponent => btn !== null,
 		);
+		console.log(
+			`[TitlePanel] Found ${components.length} navigatable components:`,
+			components,
+		);
+		return components;
 	}
 
 	interact(component: InteractiveComponent): void {
+		console.log(`[TitlePanel] Interacting with component:`, component);
+		console.log(
+			`[TitlePanel] Component is secondary button: ${component === this.secondaryButton}`,
+		);
+		console.log(
+			`[TitlePanel] Component is primary button: ${component === this.primaryButton}`,
+		);
+
+		// Handle secondary button (Info button) - try both pointerdown and click
 		if (component === this.secondaryButton) {
+			console.log(`[TitlePanel] Triggering events on secondary button`);
+			// Try pointerdown first (for modal trigger)
 			component.dispatchEvent(
 				new PointerEvent("pointerdown", { bubbles: true }),
 			);
+			// Also try click event as fallback
+			setTimeout(() => {
+				console.log(
+					`[TitlePanel] Triggering click on secondary button as fallback`,
+				);
+				component.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+			}, 10);
+		} else if (component === this.primaryButton) {
+			// Handle primary button (Play link) - trigger click for navigation
+			if (component instanceof HTMLAnchorElement) {
+				console.log(`[TitlePanel] Triggering click on primary link`);
+				// For links, trigger click event
+				component.click();
+			} else {
+				console.log(
+					`[TitlePanel] Using default interaction for primary button`,
+				);
+				// For buttons or other elements, use default behavior
+				super.interact(component);
+			}
 		} else {
+			console.log(`[TitlePanel] Using default interaction for other component`);
+			// Handle other interactive elements
 			super.interact(component);
 		}
 	}

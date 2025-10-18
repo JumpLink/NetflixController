@@ -19,6 +19,8 @@ export class Billboard extends TitlePanel {
 		const selector =
 			this.row !== undefined ? `#row-${this.row}` : ".billboard-row";
 		const billboard = document.querySelector(selector);
+		console.log(`[Billboard] Looking for panel with selector: ${selector}`);
+		console.log(`[Billboard] Panel found:`, billboard);
 		return billboard;
 	}
 
