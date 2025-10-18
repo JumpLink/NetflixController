@@ -1,8 +1,9 @@
-import { FeaturelessBrowse } from "./featureless-browse.ts";
+import { SearchGallery } from "../components/search-gallery.ts";
+import { NavigatablePage } from "./page.ts";
 
-export class SearchBrowse extends FeaturelessBrowse {
+export class SearchBrowse extends NavigatablePage {
 	loaded: boolean;
-	observer!: MutationObserver;
+	observer!: MutationObserver | null;
 
 	constructor() {
 		super();
@@ -15,12 +16,33 @@ export class SearchBrowse extends FeaturelessBrowse {
 	}
 
 	onLoad(): void {
-		super.onLoad();
-		this.observer.disconnect();
+		this.addNavigatable(0, new SearchGallery());
+		this.setNavigatable(0);
+		if (this.observer) {
+			this.observer.disconnect();
+		}
 	}
 
 	isPageReady(): boolean {
-		return super.isPageReady() && this.loaded;
+		// Wait for search results to load AND virtual keyboard to be closed
+		if (window.isKeyboardActive?.()) {
+			return false;
+		}
+		return this.loaded;
+	}
+
+	needsPseudoStyler(): boolean {
+		return true;
+	}
+
+	hasSearchBar(): boolean {
+		return true;
+	}
+
+	setNavigatable(position: number): void {
+		if (position === 0) {
+			super.setNavigatable(position);
+		}
 	}
 
 	// wait until search results are updated to load the page
@@ -29,6 +51,8 @@ export class SearchBrowse extends FeaturelessBrowse {
 		if (!search) {
 			// Search element not found, mark as loaded immediately
 			this.loaded = true;
+			// Initialize observer to null to indicate no observation is needed
+			this.observer = null;
 			return;
 		}
 		const callback = (mutationsList: MutationRecord[]) => {
