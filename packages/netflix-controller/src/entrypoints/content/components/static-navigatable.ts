@@ -30,22 +30,38 @@ export abstract class StaticNavigatable extends Navigatable {
 
 	abstract getComponents(): NavigatableComponent[];
 
-	getSelectedComponent(): NavigatableComponent {
+	getSelectedComponent(): NavigatableComponent | null {
+		// Check if position is valid
+		if (this.position < 0 || this.position >= this.components.length) {
+			return null;
+		}
 		return this.components[this.position];
 	}
 
 	// can be overriden for custom style component
-	getStyleComponent(): StyleableComponent {
-		return this.getSelectedComponent() as StyleableComponent;
+	getStyleComponent(): StyleableComponent | null {
+		const component = this.getSelectedComponent();
+		return component ? (component as StyleableComponent) : null;
 	}
 
 	// can be overriden for custom interaction component
-	getInteractionComponent(): InteractiveComponent {
-		return this.getSelectedComponent() as InteractiveComponent;
+	getInteractionComponent(): InteractiveComponent | null {
+		const component = this.getSelectedComponent();
+		return component ? (component as InteractiveComponent) : null;
 	}
 
 	// can be overriden for custom interaction
-	interact(component: InteractiveComponent): void {
+	interact(component: InteractiveComponent | null): void {
+		if (!component) {
+			return;
+		}
+
+		// Check if the component is still in the DOM
+		if (!component.isConnected) {
+			console.warn("Attempted to interact with a detached component");
+			return;
+		}
+
 		component.click();
 	}
 
@@ -99,9 +115,23 @@ export abstract class StaticNavigatable extends Navigatable {
 
 	unselect(): void {
 		if (this.position >= 0) {
-			const component = this.getStyleComponent();
-			this.style(component, false);
-			component.style.outline = "0";
+			try {
+				const component = this.getStyleComponent();
+				if (component) {
+					this.style(component, false);
+
+					// Make sure the component is still connected to the DOM
+					if (component.isConnected) {
+						component.style.outline = "0";
+					}
+				}
+			} catch (error) {
+				// Silently catch errors if component is no longer valid
+				console.warn(
+					"Error during unselect - component may have been removed",
+					error,
+				);
+			}
 		}
 	}
 
@@ -114,13 +144,42 @@ export abstract class StaticNavigatable extends Navigatable {
 	}
 
 	select(position: number): void {
+		// First make sure we unselect any current selection
 		this.unselect();
+
+		// Set the new position
 		this.position = position;
-		const component = this.getStyleComponent();
-		this.style(component, true);
-		component.style.outline = `3px solid ${getTransparentNetflixRed(0.7)}`;
-		if (this.shouldScrollIntoView()) {
-			Navigatable.scrollIntoView(this.getStyleComponent());
+
+		try {
+			// Check if position is valid
+			if (position < 0 || position >= this.components.length) {
+				console.warn(
+					`Invalid position ${position}, max is ${this.components.length - 1}`,
+				);
+				return;
+			}
+
+			// Get and validate component
+			const component = this.getStyleComponent();
+			if (!component || !component.isConnected) {
+				console.warn("Component is not valid or not connected to the DOM");
+				return;
+			}
+
+			// Apply style
+			this.style(component, true);
+
+			// Add outline - only if component is still connected to the DOM
+			component.style.outline = `3px solid ${getTransparentNetflixRed(0.7)}`;
+
+			// Scroll into view if needed
+			if (this.shouldScrollIntoView()) {
+				Navigatable.scrollIntoView(component);
+			}
+		} catch (error) {
+			console.warn("Error during select", error);
+			// Reset position on error
+			this.position = -1;
 		}
 	}
 }
