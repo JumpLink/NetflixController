@@ -7,7 +7,15 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"includes": ["**", "!.output", "!.wxt", "!.git", "!.vscode"]
+		"includes": [
+			"**",
+			"!**/*/.output",
+			"!**/*/.wxt",
+			"!.git",
+			"!.vscode",
+			"!**/*/dist",
+			"!**/*/coverage"
+		]
 	},
 	"formatter": {
 		"enabled": true,
